@@ -17,6 +17,16 @@ EXCLUDE_WORD_LIST = ['DIP','SPY','JPY','WWE','UFC','USD']
 def get_posts_from_subreddit_today(subreddit):
     return reddit.subreddit(subreddit).search(query='*', sort='new', time_filter='week')
 
+def fetch_all_comments(post):
+    """
+    Fetch all comments from a given Reddit post.
+    
+    :param post: A PRAW submission object
+    :return: A list of all comments
+    """
+    post.comments.replace_more(limit=None)
+    return post.comments.list()
+
 def filter_tickers_from_posts_for_today(posts, flair_list):
     tickers = []
     midnight = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -42,4 +52,29 @@ def get_all_caps_words(text):
 
 
 
+# Create a RedditParser class to encapsulate the functionality
+class RedditParser:
+    @staticmethod
+    def get_posts_from_subreddit_today(subreddit):
+        return get_posts_from_subreddit_today(subreddit)
     
+    @staticmethod
+    def filter_tickers_from_posts_for_today(posts, flair_list):
+        return filter_tickers_from_posts_for_today(posts, flair_list)
+    
+    @staticmethod
+    def filter_ticker_from_post_title(post_title):
+        return filter_ticker_from_post_title(post_title)
+    
+    @staticmethod
+    def get_all_caps_words(text):
+        return get_all_caps_words(text)
+    
+    @staticmethod
+    def fetch_all_comments(post):
+        return fetch_all_comments(post)
+
+# Optionally, you can also export the individual functions
+__all__ = ['RedditParser', 'get_posts_from_subreddit_today', 'filter_tickers_from_posts_for_today', 
+           'filter_ticker_from_post_title', 'get_all_caps_words']
+
