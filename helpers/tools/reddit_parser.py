@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import os
 import datetime
 import re
+import requests
 
 load_dotenv()
 
@@ -14,19 +15,71 @@ reddit = praw.Reddit(
 
 EXCLUDE_WORD_LIST = ['DIP','SPY','JPY','WWE','UFC','USD']
 
-def get_posts_from_subreddit_today(subreddit):
+def get_posts_from_subreddit_in_one_week(subreddit):
     return reddit.subreddit(subreddit).search(query='*', sort='new', time_filter='week')
 
-def fetch_all_comments(post):
+def fetch_all_comments(post, expand_level=0):
     """
     Fetch all comments from a given Reddit post.
     
     :param post: A PRAW submission object
+    :param expand_level: The level of 'more comments' to expand (default 0 for first level comments only)
     :return: A list of all comments
     """
-    post.comments.replace_more(limit=None)
-    return post.comments.list()
+    def fetch_all_comments_recursive(comment, level=0, max_level=None):
+        if max_level is not None and level > max_level:
+            return []
+        
+        comments = [comment]
+        if hasattr(comment, 'replies'):
+            comment.replies.replace_more(limit=None)
+            for reply in comment.replies:
+                comments.extend(fetch_all_comments_recursive(reply, level + 1, max_level))
+        return comments
 
+    all_comments = []
+    post.comments.replace_more(limit=None)
+    for top_level_comment in post.comments:
+        all_comments.extend(fetch_all_comments_recursive(top_level_comment, max_level=expand_level))
+    return all_comments
+ 
+
+def download_image(url, save_path):
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(save_path, 'wb') as file:
+            file.write(response.content)
+        print(f"Image downloaded successfully: {save_path}")
+    else:
+        print(f"Failed to download image. Status code: {response.status_code}")
+    
+
+
+
+def perform_ocr_on_image(image_path):
+    
+    """
+    Perform OCR on an image given its file path.
+    
+    :param image_path: Path to the image file
+    :return: Extracted text from the image
+    """
+    try:
+        # Open the image using PIL
+        image = Image.open(image_path)
+        
+        # Use pytesseract to do OCR on the image
+        text = pytesseract.image_to_string(image)
+        
+        return text.strip()
+    except FileNotFoundError:
+        print(f"Error: Image file not found at {image_path}")
+        return ""
+    except Exception as e:
+        print(f"Error performing OCR on image: {str(e)}")
+        return ""
+
+        
 def filter_tickers_from_posts_for_today(posts, flair_list):
     tickers = []
     midnight = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -55,8 +108,8 @@ def get_all_caps_words(text):
 # Create a RedditParser class to encapsulate the functionality
 class RedditParser:
     @staticmethod
-    def get_posts_from_subreddit_today(subreddit):
-        return get_posts_from_subreddit_today(subreddit)
+    def get_posts_from_subreddit_in_one_week(subreddit):
+        return get_posts_from_subreddit_in_one_week(subreddit)
     
     @staticmethod
     def filter_tickers_from_posts_for_today(posts, flair_list):
@@ -74,7 +127,10 @@ class RedditParser:
     def fetch_all_comments(post):
         return fetch_all_comments(post)
 
-# Optionally, you can also export the individual functions
-__all__ = ['RedditParser', 'get_posts_from_subreddit_today', 'filter_tickers_from_posts_for_today', 
-           'filter_ticker_from_post_title', 'get_all_caps_words']
+    @staticmethod
+    def download_image(url, save_path):
+        return download_image(url, save_path)
 
+# Optionally, you can also export the individual functions
+__all__ = ['RedditParser', 'get_posts_from_subreddit_in_one_week', 'filter_tickers_from_posts_for_today', 
+           'filter_ticker_from_post_title', 'get_all_caps_words']
