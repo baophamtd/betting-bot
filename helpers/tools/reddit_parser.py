@@ -52,32 +52,6 @@ def download_image(url, save_path):
         print(f"Image downloaded successfully: {save_path}")
     else:
         print(f"Failed to download image. Status code: {response.status_code}")
-    
-
-
-
-def perform_ocr_on_image(image_path):
-    
-    """
-    Perform OCR on an image given its file path.
-    
-    :param image_path: Path to the image file
-    :return: Extracted text from the image
-    """
-    try:
-        # Open the image using PIL
-        image = Image.open(image_path)
-        
-        # Use pytesseract to do OCR on the image
-        text = pytesseract.image_to_string(image)
-        
-        return text.strip()
-    except FileNotFoundError:
-        print(f"Error: Image file not found at {image_path}")
-        return ""
-    except Exception as e:
-        print(f"Error performing OCR on image: {str(e)}")
-        return ""
 
         
 def filter_tickers_from_posts_for_today(posts, flair_list):
