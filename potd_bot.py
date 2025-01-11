@@ -9,8 +9,9 @@ def get_potd_posts(subreddit="sportsbook"):
     :param subreddit: The subreddit to search in (default is "sportsbook")
     :return: A list of posts with the flair 'POTD'
     """
-    # Get today's date in the format "MM/DD" or "M/D"
+    # Get today's and yesterday's date in the format "MM/DD" or "M/D"
     today = datetime.datetime.now().strftime("%-m/%-d")
+    yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%-m/%-d")
     
     # Fetch all posts with the flair 'POTD'
     potd_posts = reddit_parser.get_posts_with_flair(subreddit, "POTD")
@@ -18,7 +19,12 @@ def get_potd_posts(subreddit="sportsbook"):
     # Filter posts created today
     today_posts = [post for post in potd_posts if datetime.datetime.fromtimestamp(post.created_utc).strftime("%-m/%-d") == today]
     
-    return today_posts
+    if today_posts:
+        return today_posts
+    else:
+        # If no posts today, find the latest post from yesterday
+        yesterday_posts = [post for post in potd_posts if datetime.datetime.fromtimestamp(post.created_utc).strftime("%-m/%-d") == yesterday]
+        return yesterday_posts[:1]  # Return the latest single post from yesterday
 
 def main():
     # Get POTD posts
