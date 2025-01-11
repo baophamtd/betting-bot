@@ -46,7 +46,7 @@ def iterate_comments(reddit_parser, post):
     :param reddit_parser: An instance of RedditParser
     :param post: A PRAW submission object
     """
-    comments = reddit_parser.fetch_all_comments(post)
+    comments = RedditParser.fetch_all_comments(post)
     
     print(f"\nProcessing comments for post: {post.title}")
 

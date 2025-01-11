@@ -110,6 +110,7 @@ class RedditParser:
         posts = reddit.subreddit(subreddit).search(query, sort='new')
         return list(posts)
 
+    @staticmethod
     def fetch_all_comments(post):
         return fetch_all_comments(post)
 
