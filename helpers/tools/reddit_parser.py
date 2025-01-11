@@ -18,7 +18,15 @@ EXCLUDE_WORD_LIST = ['DIP','SPY','JPY','WWE','UFC','USD']
 def get_posts_from_subreddit_in_one_week(subreddit):
     return reddit.subreddit(subreddit).search(query='*', sort='new', time_filter='week')
 
-def fetch_all_comments(post, expand_level=0):
+def get_top_level_comments(post):
+    """
+    Fetch all top-level comments from a given Reddit post.
+        
+    :param post: A PRAW submission object
+    :return: A list of top-level comments
+    """
+    post.comments.replace_more(limit=None)
+    return post.comments.list()
     """
     Fetch all comments from a given Reddit post.
     
