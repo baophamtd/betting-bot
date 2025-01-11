@@ -115,7 +115,15 @@ class RedditParser:
         return fetch_all_comments(post)
 
     @staticmethod
-    def download_image(url, save_path):
+    @staticmethod
+    def get_comment_body(comment):
+        """
+        Retrieve the body of a given Reddit comment.
+        
+        :param comment: A PRAW comment object
+        :return: The body text of the comment
+        """
+        return comment.body
         return download_image(url, save_path)
 
 # Optionally, you can also export the individual functions
