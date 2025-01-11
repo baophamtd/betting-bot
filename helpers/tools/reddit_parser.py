@@ -125,7 +125,6 @@ class RedditParser:
         """
         post.comments.replace_more(limit=None)
         return post.comments
-        return download_image(url, save_path)
 
 # Optionally, you can also export the individual functions
 __all__ = ['RedditParser', 'get_posts_from_subreddit_in_one_week', 'filter_tickers_from_posts_for_today', 
