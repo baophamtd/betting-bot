@@ -18,15 +18,7 @@ EXCLUDE_WORD_LIST = ['DIP','SPY','JPY','WWE','UFC','USD']
 def get_posts_from_subreddit_in_one_week(subreddit):
     return reddit.subreddit(subreddit).search(query='*', sort='new', time_filter='week')
 
-def get_top_level_comments(post):
-    """
-    Fetch all top-level comments from a given Reddit post.
-        
-    :param post: A PRAW submission object
-    :return: A list of top-level comments
-    """
-    post.comments.replace_more(limit=None)
-    return post.comments.list()
+def fetch_all_comments(post, expand_level=0):
     """
     Fetch all comments from a given Reddit post.
     
@@ -45,30 +37,11 @@ def get_top_level_comments(post):
                 comments.extend(fetch_all_comments_recursive(reply, level + 1, max_level))
         return comments
 
-    def fetch_all_comments(post, expand_level=0):
-        """
-        Fetch all comments from a given Reddit post.
-        
-        :param post: A PRAW submission object
-        :param expand_level: The level of 'more comments' to expand (default 0 for first level comments only)
-        :return: A list of all comments
-        """
-        def fetch_all_comments_recursive(comment, level=0, max_level=None):
-            if max_level is not None and level > max_level:
-                return []
-            
-            comments = [comment]
-            if hasattr(comment, 'replies'):
-                comment.replies.replace_more(limit=None)
-                for reply in comment.replies:
-                    comments.extend(fetch_all_comments_recursive(reply, level + 1, max_level))
-            return comments
-
-        all_comments = []
-        post.comments.replace_more(limit=None)
-        for top_level_comment in post.comments:
-            all_comments.extend(fetch_all_comments_recursive(top_level_comment, max_level=expand_level))
-        return all_comments
+    all_comments = []
+    post.comments.replace_more(limit=None)
+    for top_level_comment in post.comments:
+        all_comments.extend(fetch_all_comments_recursive(top_level_comment, max_level=expand_level))
+    return all_comments
  
 
 def download_image(url, save_path):
@@ -137,16 +110,8 @@ class RedditParser:
         posts = reddit.subreddit(subreddit).search(query, sort='new')
         return list(posts)
 
-    @staticmethod
-    def get_top_posts(subreddit, limit=10):
-        """
-        Fetch the top posts from a subreddit.
-        
-        :param subreddit: The name of the subreddit
-        :param limit: The number of top posts to retrieve (default is 10)
-        :return: A list of top posts
-        """
-        return list(reddit.subreddit(subreddit).top(limit=limit))
+    def fetch_all_comments(post):
+        return fetch_all_comments(post)
 
     @staticmethod
     def download_image(url, save_path):

@@ -10,7 +10,7 @@ sys.path.insert(0, project_root)
 from helpers.tools.reddit_parser import RedditParser
 from helpers.tools.odds_api import OddsAPI 
 from helpers.tools.ocr_api import OCRAPI  # Add this import
-from helpers.tools.langchain_client import LangChainClient
+#from helpers.tools.langchain_client import LangChainClient
 
 # Username of the bot, used to filter out its own comments
 BOT_USERNAME = 'sbpotdbot'
@@ -134,6 +134,24 @@ def get_all_nfl_bovada_odds(odds_api):
     # Ensure the ANALYZING_RESULT_FOLDER exists
     os.makedirs(ANALYZING_RESULT_FOLDER, exist_ok=True)
 
+    def convert_prop_name(key):
+        prop_name_map = {
+            'player_pass_tds': 'Passing Touchdowns',
+            'player_pass_yds': 'Passing Yards',
+            'player_pass_completions': 'Pass Completions',
+            'player_pass_attempts': 'Pass Attempts',
+            'player_rush_yds': 'Rushing Yards',
+            'player_rush_reception_yds': 'Rush + Reception Yards',
+            'player_rush_attempts': 'Rushing Attempts',
+            'player_receptions': 'Receptions',
+            'player_reception_yds': 'Receiving Yards',
+            'player_rush_longest': 'Longest Rush',
+            'player_pass_interceptions': 'Pass Interceptions',
+            'player_sacks': 'Sacks',
+            'player_anytime_td': 'Player Anytime Touchdown'
+        }
+        return prop_name_map.get(key, key.replace('_', ' ').title())
+
     with open(odds_file_path, 'w', encoding='utf-8') as odds_file:
         try:
             nfl_odds = odds_api.get_nfl_odds_bovada()
@@ -142,24 +160,33 @@ def get_all_nfl_bovada_odds(odds_api):
             for game in nfl_odds:
                 home_team = game['home_team']
                 away_team = game['away_team']
-                match_name = f"{away_team} @ {home_team}"
+                # Extract and convert commence_time to EST
+                commence_time_utc = game['commence_time']  # Assuming this is in ISO format
+                commence_time = datetime.datetime.fromisoformat(commence_time_utc[:-1])  # Remove 'Z' for conversion
+                commence_time_est = commence_time - datetime.timedelta(hours=5)  # Convert to EST (UTC-5)
+                match_name = f"{away_team} @ {home_team} | Start Time: {commence_time_est.strftime('%Y-%m-%d %H:%M:%S')} EST"
                 print(f"Fetching player props for {match_name}...")
 
                 try:
                     # Define all NFL player prop market keys
                     nfl_markets = (
-                        "player_pass_tds,player_pass_yds,player_pass_completions,"
+                        "player_pass_tds,player_pass_yds,player_pass_completions,player_pass_longest_completion,"
                         "player_pass_attempts,player_rush_yds,player_rush_reception_yds,"
-                        "player_rush_attempts,player_receptions,player_reception_yds,player_rush_longest"
+                        "player_rush_attempts,player_receptions,player_reception_yds,player_rush_longest,player_reception_longest,"
+                        "player_pass_interceptions,player_sacks,player_anytime_td"
                     )
                     player_props = odds_api.get_player_props(game['id'], nfl_markets)
                     if player_props:
                         for prop in player_props:
+                            prop_name = convert_prop_name(prop['key'])
                             for outcome in prop['outcomes']:
-                                description = outcome.get('description', prop['key'])
+                                description = outcome.get('description', '')
                                 name = outcome['name']
                                 point = outcome.get('point', '')
-                                key = f"{description} {name} {point}"
+                                over_under = ""
+                                if name.lower() in ['over', 'under']:
+                                    over_under = f"{name} {point} "
+                                key = f"{description} - {over_under}{prop_name}"
                                 price = outcome['price']
                                 odds_map[key] = {
                                     'match': match_name,
@@ -192,7 +219,7 @@ def main():
     # Initialize OddsAPI
     odds_api = OddsAPI()
     # Initialize LangChainClient
-    langchain_client = LangChainClient(model_name="gpt-3.5-turbo")
+    #langchain_client = LangChainClient(model_name="gpt-3.5-turbo")
 
     # Get NFL Player prop posts
     nfl_prop_posts = get_nfl_player_prop_posts(reddit_parser)
@@ -238,6 +265,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 
