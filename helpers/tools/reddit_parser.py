@@ -115,7 +115,16 @@ class RedditParser:
         return fetch_all_comments(post)
 
     @staticmethod
-    def download_image(url, save_path):
+    @staticmethod
+    def get_comment_forest(post):
+        """
+        Retrieve the comment forest of a given Reddit post.
+        
+        :param post: A PRAW submission object
+        :return: The comment forest of the post
+        """
+        post.comments.replace_more(limit=None)
+        return post.comments
         return download_image(url, save_path)
 
 # Optionally, you can also export the individual functions
