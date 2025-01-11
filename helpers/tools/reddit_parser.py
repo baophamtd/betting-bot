@@ -110,7 +110,16 @@ class RedditParser:
         posts = reddit.subreddit(subreddit).search(query, sort='new')
         return list(posts)
 
-    def fetch_all_comments(post):
+    @staticmethod
+    def get_top_posts(subreddit, limit=10):
+        """
+        Fetch the top posts from a subreddit.
+        
+        :param subreddit: The name of the subreddit
+        :param limit: The number of top posts to retrieve (default is 10)
+        :return: A list of top posts
+        """
+        return list(reddit.subreddit(subreddit).top(limit=limit))
         return fetch_all_comments(post)
 
     @staticmethod
