@@ -98,6 +98,18 @@ class RedditParser:
         return get_all_caps_words(text)
     
     @staticmethod
+    def get_posts_with_flair(subreddit, flair_text):
+        """
+        Fetch all posts with a specific flair from a subreddit.
+        
+        :param subreddit: The name of the subreddit
+        :param flair_text: The text of the flair to filter posts by
+        :return: A list of posts with the specified flair
+        """
+        query = f'flair:"{flair_text}"'
+        posts = reddit.subreddit(subreddit).search(query, sort='new')
+        return list(posts)
+
     def fetch_all_comments(post):
         return fetch_all_comments(post)
 
