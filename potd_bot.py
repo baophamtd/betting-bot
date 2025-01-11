@@ -1,7 +1,7 @@
 import datetime
-from helpers.tools.reddit_parser import RedditParser
+from bots.nfl_bot import RedditParser
 
-def get_potd_posts(reddit_parser, subreddit="sportsbook"):
+def get_potd_posts(subreddit="sportsbook"):
     """
     Fetch and filter posts with the flair 'POTD' from the specified subreddit.
     
@@ -21,11 +21,8 @@ def get_potd_posts(reddit_parser, subreddit="sportsbook"):
     return today_posts
 
 def main():
-    # Initialize RedditParser
-    reddit_parser = RedditParser()
-    
     # Get POTD posts
-    potd_posts = get_potd_posts(reddit_parser)
+    potd_posts = get_potd_posts()
     print(f"\nFound {len(potd_posts)} POTD posts today:")
     for post in potd_posts:
         print(f"Title: {post.title}")
