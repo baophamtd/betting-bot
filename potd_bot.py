@@ -24,7 +24,9 @@ def get_potd_posts(reddit_parser, subreddit="sportsbook"):
     else:
         # If no posts today, find the latest post from yesterday
         yesterday_posts = [post for post in potd_posts if datetime.datetime.fromtimestamp(post.created_utc).strftime("%-m/%-d") == yesterday]
-        return yesterday_posts[:1]  # Return the latest single post from yesterday
+        if yesterday_posts:
+            return [max(yesterday_posts, key=lambda post: post.created_utc)]  # Return the latest single post from yesterday
+        return []  # Return an empty list if no posts are found
 
 def main():
     # Initialize RedditParser
