@@ -35,7 +35,8 @@ def main():
     # Initialize OpenAIClient
     openai_client = OpenAIClient()
     
-    # Create an assistant
+    potd_posts = get_potd_posts(reddit_parser)
+    
     assistant = openai_client.create_assistant(
         assistant_name="potd_assistant",
         instructions="you're an assistant that just repeats what I say"
