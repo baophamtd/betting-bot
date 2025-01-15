@@ -17,6 +17,13 @@ class OpenAIClient:
         :param assistant_name: The name of the assistant
         :return: The created assistant object
         """
+        # Check if an assistant with the given name already exists
+        existing_assistants = openai.Assistant.list()
+        for existing_assistant in existing_assistants:
+            if existing_assistant.name == assistant_name:
+                print(f"Assistant with name '{assistant_name}' already exists.")
+                return existing_assistant
+
         assistant = openai.Assistant.create(
             model=model_name,
             instructions=instructions,
