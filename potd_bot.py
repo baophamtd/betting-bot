@@ -1,5 +1,6 @@
 import datetime
 from bots.nfl_bot import RedditParser
+from helpers.tools.openai_client import OpenAIClient
 
 def get_potd_posts(reddit_parser, subreddit="sportsbook"):
     """
@@ -31,7 +32,15 @@ def get_potd_posts(reddit_parser, subreddit="sportsbook"):
 def main():
     # Initialize RedditParser
     reddit_parser = RedditParser()
-    potd_posts = get_potd_posts(reddit_parser)
+    # Initialize OpenAIClient
+    openai_client = OpenAIClient()
+    
+    # Create an assistant
+    assistant = openai_client.create_assistant(
+        assistant_name="potd_assistant",
+        instructions="you're an assistant that just repeats what I say"
+    )
+    
     print(f"\nFound {len(potd_posts)} POTD posts today:")
     for post in potd_posts:
         print(f"Title: {post.title}")
