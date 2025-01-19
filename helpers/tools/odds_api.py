@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv()
+load_dotenv(override=True)
 
 class OddsAPI:
     def __init__(self):

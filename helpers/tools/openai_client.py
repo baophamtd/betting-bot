@@ -7,9 +7,8 @@ class OpenAIClient:
         self.api_key = os.getenv('OPENAI_API_KEY')
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY not found in environment variables")
-        openai.api_key = self.api_key
 
-    def create_assistant(self, instructions, assistant_name, model_name="gpt-4o"):
+    def create_assistant(self, instructions, assistant_name, model_name="gpt-4o-mini"):
         """
         Create an assistant using the OpenAI client library.
         
