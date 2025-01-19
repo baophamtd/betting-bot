@@ -1,6 +1,7 @@
 from contextlib import ExitStack
 import os
 from openai import OpenAI
+import re
 
 class OpenAIClient:
     def __init__(self):
@@ -77,18 +78,8 @@ class OpenAIClient:
         print("Assistant Updated with vector store!")
         return assistant
 
-    def delete_all_vector_stores(self):
+    def query_assistant(self, assistant_id, query):
         """
-        Delete all vector stores associated with the client.
-        """
-        # Get a list of all vector stores
-        vector_stores = self.client.beta.vector_stores.list()
-        vector_store_list = list(vector_stores.data)
-
-        # Iterate over each vector store and delete it
-        for vector_store in vector_store_list:
-            self.client.beta.vector_stores.delete(vector_store_id=vector_store.id)
-            print(f"Deleted Vector Store: {vector_store.name} (ID: {vector_store.id})")
         Query the assistant with a given input.
         
         :param assistant_id: The ID of the assistant
@@ -107,3 +98,29 @@ class OpenAIClient:
         messages = list(self.client.beta.threads.messages.list(thread_id=thread.id, run_id=run.id))
         response = messages[0].content[0].text.value
         return response
+    
+    def delete_all_vector_stores(self):
+        """
+        Delete all vector stores.
+        """
+        # Get a list of our vector stores up to the limit
+        # The default page limit is 100, but we can specify a different limit
+        # Use "after" to go through more than 100 vector stores
+        vector_stores = self.client.beta.vector_stores.list()
+
+        # Convert the SyncCursorPage to a list to get the number of 
+        # vector stores in the current page
+        vector_store_list = list(vector_stores.data)
+
+        # Show the number of vector stores in the current page
+        print("Vector Stores: " + str(len(vector_store_list)))
+        
+        # Now let's delete the vector stores in our list of retrieved vector stores
+        for vector_store in vector_store_list:
+            try:
+                # Delete the vector store
+                self.client.beta.vector_stores.delete(vector_store_id=vector_store.id)
+                print(f"Deleted vector store with Name: {vector_store.name}" 
+                        + f"\nDeleted vector store with ID: {vector_store.id}\n\n")
+            except Exception as e:
+                print(f"An error occurred while deleting the vector store: {e}")

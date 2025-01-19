@@ -1,3 +1,4 @@
+from contextlib import ExitStack
 import sys
 import os
 import datetime 
@@ -28,9 +29,9 @@ def get_potd_posts(reddit_parser, subreddit="sportsbook"):
     :param subreddit: The subreddit to search in (default is "sportsbook")
     :return: A list of posts containing POTD
     """
-    # Fetch all posts from the subreddit
-    potd_posts = reddit_parser.get_posts_from_subreddit_in_one_week(subreddit)
-    
+    # Fetch all posts with the flair "POTD" from the subreddit
+    potd_posts = reddit_parser.get_posts_with_flair(subreddit, "POTD")
+   
     # Get today's and tomorrow's date
     today = datetime.datetime.now().strftime("%-m/%-d")
     tomorrow = (datetime.datetime.now() + datetime.timedelta(days=1)).strftime("%-m/%-d")
@@ -49,22 +50,20 @@ def get_potd_posts(reddit_parser, subreddit="sportsbook"):
     
     return []  # Return an empty list if no posts for today or tomorrow
     
-def save_comments_to_file(comments):
+def save_comments_to_file(comments, file_name):
     """
     Save the comments of a post to a file.
 
     :param comments: A list of comments to save
+    :param file_name: The name of the file to save the comments in
     """
     # Create a folder for the post's comments
     post_folder = os.path.join(POTD_DATA_FOLDER)
     os.makedirs(post_folder, exist_ok=True)
 
-    # Create the file name in the format potd_date.txt
-    date_str = datetime.datetime.now().strftime("%Y-%m-%d")
-    file_name = os.path.join(post_folder, f"potd_{date_str}.txt")
-    
     # Save all comments to the file
-    with open(file_name, "w") as file:
+    file_path = os.path.join(post_folder, file_name)
+    with open(file_path, "w") as file:
         for comment in comments:
             # Skip comments by the bot
             if comment.author and comment.author.name.lower() == BOT_USERNAME.lower():
@@ -77,7 +76,7 @@ def save_comments_to_file(comments):
             file.write(f"Author: {author}\n")
             file.write(f"Created UTC: {created_time}\n")
             file.write(f"{comment_body}\n")
-            file.write("=" * 90 + "\n")
+            file.write("\n" + "=" * 90 + "\n\n")
 
 def convert_emojis_to_text(comment):
     """
@@ -128,25 +127,38 @@ def create_potd_assistant(openai_client):
      Then why you agree with the author and give their track record.
      If there are multiple bets, then bullet point them."""
      )
+     return assistant
                                                                                                                               
 
 # Example usage in main function:
 def main():
      # Initialize RedditParser                                                                                                
      reddit_parser = RedditParser()                                                                                           
-          # Initialize OpenAIClient                     
+     # Initialize OpenAIClient                     
      openai_client = OpenAIClient()                
-                                                   
-     # Create an assistant                         
-     assistant = create_potd_assistant(openai_client)     
-                                                                                                        
+                 
      potd_posts = get_potd_posts(reddit_parser)                                                                               
      print(f"\nFound {len(potd_posts)} POTD posts today:")   
      # get first post
      latest_post = potd_posts[0]                                                                 
-     print(f"Title: {latest_post.title}")                                                                                        
+     print(f"Title: {latest_post.title}")                                                                              
      comments = reddit_parser.fetch_all_comments(latest_post)
-     save_comments_to_file(comments)
-         
+     # Generate the file name from the post title
+     file_name = latest_post.title.replace(" ", "-").replace("/", "-") + ".txt"
+     save_comments_to_file(comments, file_name)   
+                                    
+     # Create an assistant                         
+     assistant = create_potd_assistant(openai_client)   
+     # Get all file paths under POTD_DATA_FOLDER
+     file_paths = [os.path.join(POTD_DATA_FOLDER, file) for file in os.listdir(POTD_DATA_FOLDER) if os.path.isfile(os.path.join(POTD_DATA_FOLDER, file))]
+     # Create Vector Store
+     openai_client.create_vector_store_for_assistant_with_file_paths(assistant.id, "potd_vector_store", file_paths)
+
+     # Ask the important question to the assistant
+     query = "What are the best bet(s) for today?"
+     response = openai_client.query_assistant(assistant.id, query)
+     print(f"Assistant Response: {response}")
+     
+     openai_client.delete_all_vector_stores()
 if __name__ == "__main__":
     main()
