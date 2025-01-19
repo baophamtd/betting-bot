@@ -11,13 +11,6 @@ class OpenAIClient:
 
     def create_assistant(self, instructions, assistant_name, model_name="gpt-4o-mini"):
         """
-        Query the assistant with a given input.
-        
-        :param assistant_id: The ID of the assistant
-        :param query: The input query for the assistant
-        :return: The assistant's response
-        """
-    def query_assistant(self, assistant_id, query):
         Create an assistant using the OpenAI client library.
         
         :param model_name: The model to be used (e.g., "gpt-4o")
@@ -96,7 +89,6 @@ class OpenAIClient:
         for vector_store in vector_store_list:
             self.client.beta.vector_stores.delete(vector_store_id=vector_store.id)
             print(f"Deleted Vector Store: {vector_store.name} (ID: {vector_store.id})")
-        """
         Query the assistant with a given input.
         
         :param assistant_id: The ID of the assistant
