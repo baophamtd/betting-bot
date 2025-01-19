@@ -77,7 +77,18 @@ class OpenAIClient:
         print("Assistant Updated with vector store!")
         return assistant
 
-    def query_assistant(self, assistant_id, query):
+    def delete_all_vector_stores(self):
+        """
+        Delete all vector stores associated with the client.
+        """
+        # Get a list of all vector stores
+        vector_stores = self.client.beta.vector_stores.list()
+        vector_store_list = list(vector_stores.data)
+
+        # Iterate over each vector store and delete it
+        for vector_store in vector_store_list:
+            self.client.beta.vector_stores.delete(vector_store_id=vector_store.id)
+            print(f"Deleted Vector Store: {vector_store.name} (ID: {vector_store.id})")
         """
         Query the assistant with a given input.
         
