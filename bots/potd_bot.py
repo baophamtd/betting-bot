@@ -4,6 +4,7 @@ import os
 import datetime 
 import re 
 import emoji
+import pytz
 
 
 # Add the project root directory to the Python path
@@ -11,8 +12,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
 from helpers.tools.reddit_parser import RedditParser
-from helpers.tools.odds_api import OddsAPI 
-from helpers.tools.ocr_api import OCRAPI  # Add this import
+from helpers.tools.telegram_bot_client import TelegramBotClient 
 from helpers.tools.openai_client import OpenAIClient 
 
 
@@ -32,23 +32,40 @@ def get_potd_posts(reddit_parser, subreddit="sportsbook"):
     # Fetch all posts with the flair "POTD" from the subreddit
     potd_posts = reddit_parser.get_posts_with_flair(subreddit, "POTD")
    
-    # Get today's and tomorrow's date
-    today = datetime.datetime.now().strftime("%-m/%-d")
-    tomorrow = (datetime.datetime.now() + datetime.timedelta(days=1)).strftime("%-m/%-d")
+    # Get today's and tomorrow's date in PST
+    pst = pytz.timezone('America/Los_Angeles')
+    today = datetime.datetime.now(pst).strftime("%-m/%-d/%y")
+    tomorrow = (datetime.datetime.now(pst) + datetime.timedelta(days=1)).strftime("%-m/%-d/%y")
+     
+    print(f"Today's date (PST): {today}")
+    print(f"Tomorrow's date (PST): {tomorrow}")
+    print(f"potd_posts: {len(potd_posts)}")
     
     # Filter posts for tomorrow's date
-    tomorrow_posts = [post for post in potd_posts if datetime.datetime.fromtimestamp(post.created_utc).strftime("%-m/%-d") == tomorrow]
-    
+    tomorrow_posts = [post for post in potd_posts if extract_date_from_title(post.title) == tomorrow]
+  
     if tomorrow_posts:
         return tomorrow_posts[:1]  # Return the latest single post for tomorrow
     
     # If no posts for tomorrow, filter posts for today's date
-    today_posts = [post for post in potd_posts if datetime.datetime.fromtimestamp(post.created_utc).strftime("%-m/%-d") == today]
-    
+    today_posts = [post for post in potd_posts if extract_date_from_title(post.title) == today]
+  
     if today_posts:
         return today_posts[:1]  # Return the latest single post for today
     
     return []  # Return an empty list if no posts for today or tomorrow
+ 
+def extract_date_from_title(title):
+    """
+    Extract the date from the post title in the format MM/DD/YY.
+
+    :param title: The title of the post
+    :return: The extracted date as a string in the format MM/DD/YY, or None if no date is found
+    """
+    match = re.search(r'\b(\d{1,2}/\d{1,2}/\d{2})\b', title)
+    return match.group(1) if match else None
+
+
     
 def save_comments_to_file(comments, file_name):
     """
@@ -132,33 +149,45 @@ def create_potd_assistant(openai_client):
 
 # Example usage in main function:
 def main():
-     # Initialize RedditParser                                                                                                
-     reddit_parser = RedditParser()                                                                                           
-     # Initialize OpenAIClient                     
-     openai_client = OpenAIClient()                
-                 
-     potd_posts = get_potd_posts(reddit_parser)                                                                               
-     print(f"\nFound {len(potd_posts)} POTD posts today:")   
-     # get first post
-     latest_post = potd_posts[0]                                                                 
-     print(f"Title: {latest_post.title}")                                                                              
-     comments = reddit_parser.fetch_all_comments(latest_post)
-     # Generate the file name from the post title
-     file_name = latest_post.title.replace(" ", "-").replace("/", "-") + ".txt"
-     save_comments_to_file(comments, file_name)   
-                                    
-     # Create an assistant                         
-     assistant = create_potd_assistant(openai_client)   
-     # Get all file paths under POTD_DATA_FOLDER
-     file_paths = [os.path.join(POTD_DATA_FOLDER, file) for file in os.listdir(POTD_DATA_FOLDER) if os.path.isfile(os.path.join(POTD_DATA_FOLDER, file))]
-     # Create Vector Store
-     openai_client.create_vector_store_for_assistant_with_file_paths(assistant.id, "potd_vector_store", file_paths)
+    # Initialize RedditParser                                                                                                
+    reddit_parser = RedditParser()                                                                                           
+    # Initialize OpenAIClient                     
+    openai_client = OpenAIClient()    
+    # Initialize TelegramBotClient
+    telegram_bot_client = TelegramBotClient()            
+                
+    potd_posts = get_potd_posts(reddit_parser)                                                                               
+    print(f"\nFound {len(potd_posts)} POTD posts today:")   
+    # get first post
+    latest_post = potd_posts[0]                                                                 
+    print(f"Title: {latest_post.title}")                                                                              
+    comments = reddit_parser.fetch_all_comments(latest_post)
+    # Generate the file name from the post title
+    file_name = latest_post.title.replace(" ", "-").replace("/", "-") + ".txt"
+    save_comments_to_file(comments, file_name)   
+                                
+    # Create an assistant                         
+    assistant = create_potd_assistant(openai_client)   
+    # Get all file paths under POTD_DATA_FOLDER
+    file_paths = [os.path.join(POTD_DATA_FOLDER, file) for file in os.listdir(POTD_DATA_FOLDER) if os.path.isfile(os.path.join(POTD_DATA_FOLDER, file))]
+    # Create Vector Store
+    openai_client.create_vector_store_for_assistant_with_file_paths(assistant.id, "potd_vector_store", file_paths)
 
-     # Ask the important question to the assistant
-     query = "What are the best bet(s) for today?"
-     response = openai_client.query_assistant(assistant.id, query)
-     print(f"Assistant Response: {response}")
+    # Ask the important question to the assistant
+    query = "What are the best bet(s) for tomorrow?"
+    
+    response = openai_client.query_assistant(assistant.id, query)
+    print(f"Assistant Response: {response}")
+    
+    openai_client.delete_all_vector_stores()
+    
+    # Remove all files in POTD_DATA_FOLDER
+    for file in file_paths:
+        os.remove(file)
+    print("All files in POTD_DATA_FOLDER have been removed.")
+
      
-     openai_client.delete_all_vector_stores()
+    telegram_bot_client.send_message(f"POTD Assistant: {response}")
+    
 if __name__ == "__main__":
     main()
