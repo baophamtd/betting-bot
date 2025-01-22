@@ -78,6 +78,9 @@ def save_comments_to_file(comments, file_name):
     post_folder = os.path.join(POTD_DATA_FOLDER)
     os.makedirs(post_folder, exist_ok=True)
 
+    # Set the timezone to PST (America/Los_Angeles)
+    pst = pytz.timezone('America/Los_Angeles')
+
     # Save all comments to the file
     file_path = os.path.join(post_folder, file_name)
     with open(file_path, "w") as file:
@@ -91,7 +94,8 @@ def save_comments_to_file(comments, file_name):
             comment_body = convert_emojis_to_text(comment.body)
             comment_body = "\n".join([line for line in comment_body.splitlines() if line.strip() != ""])
             file.write(f"Author: {author}\n")
-            file.write(f"Created UTC: {created_time}\n")
+            pst_time = datetime.datetime.fromtimestamp(comment.created_utc, pst).strftime("%Y-%m-%d %H:%M:%S")
+            file.write(f"Created PST: {pst_time}\n")
             file.write(f"{comment_body}\n")
             file.write("\n" + "=" * 90 + "\n\n")
 
@@ -109,40 +113,44 @@ def create_potd_assistant(openai_client):
      assistant = openai_client.create_assistant(   
          assistant_name="potd_assistant",          
          instructions="""
-     # CONTEXT #
-     You are a sports betting advisor that has the latest information of all teams and players from all sports.
-     I'm going to provide you a list of suggestions for Pick of The Day (POTD) from different sport betting advisors.
-     In each of the suggestion, the author will provide their track record of their recent predictions (if available), and the reason why they think their bet is a good bet for today.
-     Each suggestion is separated by a line break made up of 90 equal signs.
-     This is an example of their suggestion:
-     
+    # CONTEXT #
+    You are a sports betting advisor with the latest information on all teams and players across all sports.
+    I will provide you with a list of suggestions for the Pick of the Day (POTD) from various sports betting advisors.
+    Each suggestion includes the author’s track record of recent predictions (if available) and their reasoning for why they believe their bet is a good choice for today.
+    Suggestions are separated by a line break consisting of 90 equal signs.
+    Additionally, past suggestions from older data files are provided for your reference to assess the authors' records.   
+    
+    This is an example of their suggestion:
      Author: test_author
-     Created UTC: 2025-01-17 17:17:14
+     Created PST: 2025-01-17 17:17:14
      Record: 20-4 (4 pushes) 
      Net Units: +22.83E
      ROI: +38%
      Sport: Champion League Soccer
      Pick: Hannover U23 – Erzgebirge Aue / Over 2.5
+     Unit size: 2 units
      Write Up: This pick is from my soccer model that I've been using for the past two years. It assigns ELO ratings to players and projects a win chance based on the combined ELO ratings of the players on each team. TeamReddit is projecting a 62% win chance here which creates value here on the ML.
 
-     Note: The example above is just a template. The actual suggestions will vary in format and content.
+    Note: The example above is just a template. The actual suggestions will vary in format and content.
      
-     # OBJECTIVE #
-     You need to go through all of the suggestions. Look at each other track record. Then look at the reason of their bet. Then use your knowledge from the latest information about the teams/players in the match and tell me what is the best bet for today.
-     Remember, you have to incorporate your knowledge obtained from the internet too.
-     Try to give me only one single best bet, but if you think there are a few bets that rank equal in terms of quality then give me all of them.
+    # OBJECTIVE #
+    You need to go through all of the suggestions. Look at each other track record. Then look at the reason of their bet. Then use your knowledge from the latest information about the teams/players in the match and tell me what is the best bet for today.
+    Remember, you have to incorporate your knowledge obtained from the internet too.
+    Try to give me only one single best bet, but if you think there are a few bets that rank equal in terms of quality then give me all of them.
      
-     # STYLE #
-     A check mark or anything that has the same meaning usually means that it is a win.
-     A cross mark or anything that has the same meaning usually means that it is a loss.
+    # STYLE #
+    A check mark or anything that has the same meaning usually means that it is a win.
+    A cross mark or anything that has the same meaning usually means that it is a loss.
      
-     # TONE #
-     Brief
+    # TONE #
+    Brief
      
-     # RESPONSE #
-     Each response you need to tell me exactly what to bet on and which author the bet come from.
-     Then why you agree with the author and give their track record.
-     If there are multiple bets, then bullet point them."""
+    # RESPONSE #
+    Each response must clearly specify what to bet on and identify the author of the bet.
+    You must also provide your own input, based on your research, explaining why you agree with the author and include their track record.
+    When you provide the bet(s), ensure they are from the most recent suggestions based on the date and pertain to sporting events that have not yet occurred.
+    Check the results of the sporting events before offering the bet. If the event has already taken place, do not include it in your response.
+    If there are multiple bets, present them as bullet points."""
      )
      return assistant
                                                                                                                               
@@ -182,9 +190,9 @@ def main():
     openai_client.delete_all_vector_stores()
     
     # Remove all files in POTD_DATA_FOLDER
-    for file in file_paths:
-        os.remove(file)
-    print("All files in POTD_DATA_FOLDER have been removed.")
+    # for file in file_paths:
+    #     os.remove(file)
+    # print("All files in POTD_DATA_FOLDER have been removed.")
 
      
     telegram_bot_client.send_message(f"POTD Assistant: {response}")

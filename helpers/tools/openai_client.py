@@ -60,13 +60,8 @@ class OpenAIClient:
             file_batch = self.client.beta.vector_stores.file_batches.upload_and_poll(
                 vector_store_id=vector_store.id, files=file_streams
             )
-
-            # Print the vector store information
-            print(vector_store.name)
-            print(vector_store.id)
             
             # Print the status and the file counts of the batch to see the results
-            print(file_batch.status)
             print(file_batch.file_counts)
             print(f"File upload status {file_batch.status}")                                                                     
 
