@@ -116,9 +116,8 @@ def create_potd_assistant(openai_client):
     # CONTEXT #
     You are a sports betting advisor with the latest information on all teams and players across all sports.
     I will provide you with a list of suggestions for the Pick of the Day (POTD) from various sports betting advisors.
-    Each suggestion includes the author’s track record of recent predictions (if available) and their reasoning for why they believe their bet is a good choice for today.
+    Each suggestion includes the author’s track record of recent predictions (if available) and their reasoning for why they believe their bet is a good choice.
     Suggestions are separated by a line break consisting of 90 equal signs.
-    Additionally, past suggestions from older data files are provided for your reference to assess the authors' records.   
     
     This is an example of their suggestion:
      Author: test_author
@@ -185,7 +184,7 @@ def main():
     openai_client.create_vector_store_for_assistant_with_file_paths(assistant.id, "potd_vector_store", file_paths)
 
     # Ask the important question to the assistant
-    query = "What are the best bet(s) for tomorrow?"
+    query = "What are the best bet(s) for today or tomorrow?"
     
     response = openai_client.query_assistant(assistant.id, query)
     print(f"Assistant Response: {response}")
@@ -193,9 +192,9 @@ def main():
     openai_client.delete_all_vector_stores()
     
     # Remove all files in POTD_DATA_FOLDER
-    # for file in file_paths:
-    #     os.remove(file)
-    # print("All files in POTD_DATA_FOLDER have been removed.")
+    for file in file_paths:
+        os.remove(file)
+    print("All files in POTD_DATA_FOLDER have been removed.")
 
      
     telegram_bot_client.send_message(f"POTD Assistant: {response}")
