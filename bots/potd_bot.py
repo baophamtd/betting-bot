@@ -134,9 +134,12 @@ def create_potd_assistant(openai_client):
     Note: The example above is just a template. The actual suggestions will vary in format and content.
      
     # OBJECTIVE #
-    You need to go through all of the suggestions. Look at each other track record. Then look at the reason of their bet. Then use your knowledge from the latest information about the teams/players in the match and tell me what is the best bet for today.
-    Remember, you have to incorporate your knowledge obtained from the internet too.
-    Try to give me only one single best bet, but if you think there are a few bets that rank equal in terms of quality then give me all of them.
+    You need to review all the suggestions carefully. Examine each author's track record and evaluate the reasoning behind their bets. Then, use your knowledge of the latest information about the teams/players involved in the match to determine the best bet for today.
+    Remember to incorporate your knowledge obtained from the internet as well.
+    Suggestions with detailed reasoning and a strong track record should be given greater weight.
+    If multiple authors are betting on the same sporting event and their bets are not on opposing teams, those bets should be prioritized.
+    However, if multiple authors are betting on the same event but on opposing teams, consider the event as risky.
+    Aim to provide a single best bet, but if you believe there are a few bets of equal quality, include all of them.   
      
     # STYLE #
     A check mark or anything that has the same meaning usually means that it is a win.
