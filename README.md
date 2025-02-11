@@ -34,7 +34,7 @@ The AI Betting Advisor Bot is an advanced tool designed to assist users in makin
    ```
 
 3. **Set Up Environment Variables**:
-   Create a `.env` file and add your API keys and tokens:
+   Create a `.env` file and add your API keys and tokens. Make sure to use your own credentials for each service:
    ```
    OCR_SPACE_API_KEY=your_ocr_api_key
    ODDS_API_KEY=your_odds_api_key
