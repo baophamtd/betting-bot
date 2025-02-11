@@ -16,7 +16,7 @@ The AI Betting Advisor Bot is an advanced tool designed to assist users in makin
 
 - **Reddit Parser**: Gathers posts and comments from specified subreddits.
 - **OddsAPI**: Interfaces with external APIs to retrieve betting odds.
-- **OpenAI Client**: Utilizes OpenAI's models to generate betting advice and insights.
+- **OpenAI Client**: Leverages a RAG-based OpenAI personal assistant to generate betting advice and insights.
 - **Telegram Bot Client**: Manages communication with Telegram for real-time updates.
 
 ## Getting Started
