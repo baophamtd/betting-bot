@@ -2,7 +2,7 @@
 
 ## Overview
 
-#### The AI Betting Advisor Bot is an advanced tool designed to assist users in making informed betting decisions. By leveraging a RAG-based OpenAI personal assistant, this bot analyzes various data sources to provide insights and recommendations for sports betting.
+The AI Betting Advisor Bot is an advanced tool designed to assist users in making informed betting decisions. By leveraging a RAG-based OpenAI personal assistant, this bot analyzes various data sources to provide insights and recommendations for sports betting.
 
 ## Features
 
