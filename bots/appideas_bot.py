@@ -66,35 +66,29 @@ class AppIdeasBot:
         :return: GPT-5's analysis of the idea
         """
         input_text = f"""
-        Please analyze the following app idea from r/AppIdeas and provide a comprehensive evaluation:
+        Analyze this app idea from r/AppIdeas:
 
         **Title:** {post_data['title']}
         **Content:** {post_data['content']}
-        **Post Type:** {post_data['post_type']}
-        **Author:** {post_data['author']}
-        **Posted:** {post_data['created_utc']}
-        **Score:** {post_data['score']} upvotes
-        **Comments:** {post_data['num_comments']}
-        **Link:** {post_data['permalink']}
+        **Score:** {post_data['score']} upvotes | **Comments:** {post_data['num_comments']}
 
-        Please evaluate this app idea based on the following criteria:
-        1. **Feasibility** (1-10): How technically feasible is this idea?
-        2. **Market Potential** (1-10): How much market demand exists for this app?
-        3. **Innovation** (1-10): How unique and innovative is this concept?
-        4. **Monetization** (1-10): How easily can this app be monetized?
-        5. **AI Integration** (1-10): How well does this idea leverage AI/ML capabilities? (PRIORITIZE AI-powered ideas - this is where the money and opportunities are right now)
-        6. **Overall Viability** (1-10): Overall assessment of the idea's potential
+        Rate each criterion (1-10) with brief explanation:
+        1. **Feasibility** - Technical difficulty
+        2. **Market Potential** - Demand/opportunity  
+        3. **Innovation** - Uniqueness
+        4. **Monetization** - Revenue potential
+        5. **AI Integration** - AI/ML usage (PRIORITIZE AI ideas)
+        6. **Overall Viability** - Overall potential
 
-        IMPORTANT: Prioritize ideas that leverage AI, machine learning, or automation. These are the most valuable and profitable opportunities in the current market. Ideas that don't use AI should be scored lower unless they have exceptional other qualities.
+        IMPORTANT: Prioritize AI-powered ideas. Non-AI ideas should score lower unless exceptional.
 
         Provide:
-        - A brief summary of the idea
-        - Scores for each criterion with brief explanations (especially highlight AI usage)
-        - Key strengths and weaknesses
-        - Potential challenges and opportunities
-        - A final recommendation (Pursue, Consider, or Pass)
+        - Brief summary (1-2 sentences)
+        - Top 3 scores with short explanations
+        - Key strength/weakness (1 each)
+        - Recommendation: Pursue/Consider/Pass
 
-        Keep your response concise but informative (max 300 words).
+        Keep response under 200 words.
         """
         
         try:
@@ -105,7 +99,7 @@ class AppIdeasBot:
                     {"role": "system", "content": "You are an expert app developer and business analyst who evaluates app ideas for feasibility and market potential."},
                     {"role": "user", "content": input_text}
                 ],
-                max_completion_tokens=2000  # Much higher limit to allow for reasoning + response
+                max_completion_tokens=800  # Reduced for shorter responses
             )
             
             return response.choices[0].message.content.strip()
@@ -116,6 +110,7 @@ class AppIdeasBot:
     def filter_feasible_ideas(self, posts_with_analysis: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Filter posts to only include those with feasible ideas based on GPT-5 analysis.
+        Only includes ideas with AI Integration score of 5 or higher.
         
         :param posts_with_analysis: List of posts with their GPT-5 analysis
         :return: List of posts that are deemed feasible
@@ -124,6 +119,11 @@ class AppIdeasBot:
         
         for post_data in posts_with_analysis:
             analysis = post_data.get('analysis', '')
+            
+            # First check if AI Integration score is 5 or higher
+            ai_score = self._extract_ai_score(analysis)
+            if ai_score < 5:
+                continue  # Skip ideas with low AI integration
             
             # Look for positive indicators in the analysis
             positive_indicators = [
@@ -171,38 +171,32 @@ class AppIdeasBot:
         if not feasible_ideas:
             return f"📱 **AppIdeas Daily Report** - {datetime.datetime.now().strftime('%Y-%m-%d')}\n\n" \
                    f"📊 Analyzed {total_posts} posts from r/AppIdeas in the past 24 hours\n\n" \
-                   f"❌ No feasible ideas found today.\n\n" \
+                   f"🤖 No AI-powered ideas found today (AI score ≥5 required).\n\n" \
                    f"Better luck tomorrow! 🍀"
         
         message = f"📱 **AppIdeas Daily Report** - {datetime.datetime.now().strftime('%Y-%m-%d')}\n\n"
         message += f"📊 Analyzed {total_posts} posts from r/AppIdeas in the past 24 hours\n"
-        message += f"✅ Found {len(feasible_ideas)} feasible ideas!\n\n"
+        message += f"🤖 Found {len(feasible_ideas)} AI-powered ideas (AI score ≥5)!\n\n"
         
         for i, idea in enumerate(feasible_ideas, 1):
             message += f"**{i}. {idea['title']}**\n"
-            message += f"👤 by u/{idea['author']} | ⬆️ {idea['score']} | 💬 {idea['num_comments']}\n"
+            message += f"👤 u/{idea['author']} | ⬆️ {idea['score']} | 💬 {idea['num_comments']}\n"
             message += f"🔗 https://reddit.com{idea['permalink']}\n\n"
             
-            # Extract and format the summary and scores from GPT-5 analysis
+            # Extract only the most important info from GPT-5 analysis
             analysis = idea['analysis']
             summary = self._extract_summary(analysis)
-            scores = self._extract_scores(analysis)
+            top_scores = self._extract_top_scores(analysis)
             
             if summary:
-                message += f"📝 **Summary:** {summary}\n\n"
+                # Truncate summary to 100 chars max
+                summary = summary[:100] + "..." if len(summary) > 100 else summary
+                message += f"📝 {summary}\n\n"
             
-            if scores:
-                message += f"📊 **Scorecard:**\n"
-                for score_name, score_value, reason in scores:
-                    message += f"• {score_name}: {score_value}/10 - {reason}\n"
-                message += "\n"
+            if top_scores:
+                message += f"📊 {top_scores}\n\n"
             
-            # Add key insights (truncated)
-            insights = self._extract_key_insights(analysis)
-            if insights:
-                message += f"💡 **Key Insights:** {insights}\n\n"
-            
-            message += "─" * 40 + "\n\n"
+            message += "─" * 30 + "\n\n"
         
         return message
     
@@ -245,6 +239,43 @@ class AppIdeasBot:
                         scores.append((score_name, score_value, reason))
         
         return scores
+    
+    def _extract_top_scores(self, analysis: str) -> str:
+        """Extract only the top 2-3 scores for concise display."""
+        scores = self._extract_scores(analysis)
+        if not scores:
+            return ""
+        
+        # Sort by score value (highest first)
+        scores.sort(key=lambda x: int(x[1]), reverse=True)
+        
+        # Take top 2-3 scores and format concisely
+        top_scores = scores[:3]
+        formatted = []
+        
+        for score_name, score_value, reason in top_scores:
+            # Shorten score name
+            short_name = score_name.replace('Feasibility', 'Feas').replace('Market Potential', 'Market').replace('AI Integration', 'AI').replace('Overall Viability', 'Overall')
+            # Truncate reason to 30 chars
+            short_reason = reason[:30] + "..." if len(reason) > 30 else reason
+            formatted.append(f"{short_name}: {score_value}/10 - {short_reason}")
+        
+        return " | ".join(formatted)
+    
+    def _extract_ai_score(self, analysis: str) -> int:
+        """Extract the AI Integration score from GPT-5 analysis."""
+        lines = analysis.split('\n')
+        
+        for line in lines:
+            # Look for AI Integration score pattern
+            if 'ai integration' in line.lower() and ('/10' in line or '/ 10' in line):
+                import re
+                score_match = re.search(r'(\d+)/10', line)
+                if score_match:
+                    return int(score_match.group(1))
+        
+        # If no AI Integration score found, return 0 (will be filtered out)
+        return 0
     
     def _extract_key_insights(self, analysis: str) -> str:
         """Extract key insights from GPT-5 analysis."""
