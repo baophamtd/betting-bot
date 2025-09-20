@@ -60,7 +60,7 @@ class AppIdeasBot:
     
     def analyze_idea_with_gpt5(self, post_data: Dict[str, Any]) -> str:
         """
-        Analyze an app idea using OpenAI GPT-5 with Chat Completions API.
+        Analyze an app idea using OpenAI GPT-5 with optimized speed settings.
         
         :param post_data: Formatted post data
         :return: GPT-5's analysis of the idea
@@ -99,7 +99,7 @@ class AppIdeasBot:
                     {"role": "system", "content": "You are an expert app developer and business analyst who evaluates app ideas for feasibility and market potential."},
                     {"role": "user", "content": input_text}
                 ],
-                max_completion_tokens=800  # Reduced for shorter responses
+                max_completion_tokens=3000  # Much higher limit for GPT-5 reasoning + response
             )
             
             return response.choices[0].message.content.strip()
@@ -120,10 +120,14 @@ class AppIdeasBot:
         for post_data in posts_with_analysis:
             analysis = post_data.get('analysis', '')
             
-            # First check if AI Integration score is 5 or higher
+            # First check if AI Integration score is 7 or higher
             ai_score = self._extract_ai_score(analysis)
-            if ai_score < 5:
+            print(f"🤖 AI Integration Score: {ai_score}/10")
+            if ai_score < 7:
+                print(f"❌ Filtered out: AI score {ai_score} < 7")
                 continue  # Skip ideas with low AI integration
+            else:
+                print(f"✅ Passed AI filter: AI score {ai_score} >= 7")
             
             # Look for positive indicators in the analysis
             positive_indicators = [
@@ -171,32 +175,47 @@ class AppIdeasBot:
         if not feasible_ideas:
             return f"📱 **AppIdeas Daily Report** - {datetime.datetime.now().strftime('%Y-%m-%d')}\n\n" \
                    f"📊 Analyzed {total_posts} posts from r/AppIdeas in the past 24 hours\n\n" \
-                   f"🤖 No AI-powered ideas found today (AI score ≥5 required).\n\n" \
+                   f"🤖 No AI-powered ideas found today (AI score ≥7 required).\n\n" \
                    f"Better luck tomorrow! 🍀"
         
         message = f"📱 **AppIdeas Daily Report** - {datetime.datetime.now().strftime('%Y-%m-%d')}\n\n"
         message += f"📊 Analyzed {total_posts} posts from r/AppIdeas in the past 24 hours\n"
-        message += f"🤖 Found {len(feasible_ideas)} AI-powered ideas (AI score ≥5)!\n\n"
+        message += f"🤖 Found {len(feasible_ideas)} AI-powered ideas (AI score ≥7)!\n\n"
         
-        for i, idea in enumerate(feasible_ideas, 1):
-            message += f"**{i}. {idea['title']}**\n"
-            message += f"👤 u/{idea['author']} | ⬆️ {idea['score']} | 💬 {idea['num_comments']}\n"
-            message += f"🔗 https://reddit.com{idea['permalink']}\n\n"
-            
-            # Extract only the most important info from GPT-5 analysis
-            analysis = idea['analysis']
-            summary = self._extract_summary(analysis)
-            top_scores = self._extract_top_scores(analysis)
-            
-            if summary:
-                # Truncate summary to 100 chars max
-                summary = summary[:100] + "..." if len(summary) > 100 else summary
-                message += f"📝 {summary}\n\n"
-            
-            if top_scores:
-                message += f"📊 {top_scores}\n\n"
-            
-            message += "─" * 30 + "\n\n"
+        return message
+    
+    def format_individual_idea_message(self, idea: Dict[str, Any], idea_number: int) -> str:
+        """
+        Format a single idea into a detailed Telegram message.
+        
+        :param idea: Idea data with analysis
+        :param idea_number: Number of the idea (1, 2, 3, etc.)
+        :return: Formatted message string for this idea
+        """
+        message = f"**{idea_number}. {idea['title']}**\n"
+        message += f"👤 u/{idea['author']} | ⬆️ {idea['score']} | 💬 {idea['num_comments']}\n"
+        message += f"🔗 https://reddit.com{idea['permalink']}\n\n"
+        
+        # Extract detailed information from GPT-5 analysis
+        analysis = idea['analysis']
+        summary = self._extract_summary(analysis)
+        scores = self._extract_scores(analysis)
+        key_insights = self._extract_key_insights(analysis)
+        
+        # Add summary
+        if summary:
+            message += f"📝 **Summary:** {summary}\n\n"
+        
+        # Add detailed scorecards
+        if scores:
+            message += f"📊 **Scorecard:**\n"
+            for score_name, score_value, reason in scores:
+                message += f"• **{score_name}:** {score_value}/10 - {reason}\n"
+            message += "\n"
+        
+        # Add key insights
+        if key_insights:
+            message += f"💡 **Key Insights:** {key_insights}\n\n"
         
         return message
     
@@ -319,15 +338,39 @@ class AppIdeasBot:
                 analysis = self.analyze_idea_with_gpt5(post_data)
                 post_data['analysis'] = analysis
                 posts_with_analysis.append(post_data)
+                
+                # Print full analysis to console
+                print(f"\n{'='*80}")
+                print(f"POST {i}: {post.title}")
+                print(f"{'='*80}")
+                print(f"Author: u/{post_data['author']} | Score: {post_data['score']} | Comments: {post_data['num_comments']}")
+                print(f"Content: {post_data['content'][:200]}...")
+                print(f"\nGPT-5 ANALYSIS:")
+                print(analysis)
+                print(f"{'='*80}\n")
             
             # Filter for feasible ideas
+            print(f"\n{'='*80}")
+            print("FILTERING RESULTS:")
+            print(f"{'='*80}")
             feasible_ideas = self.filter_feasible_ideas(posts_with_analysis)
             
-            # Format and send message
-            message = self.format_telegram_message(feasible_ideas, len(posts))
-            self.telegram_client.send_message(message)
+            # Send summary message first
+            summary_message = self.format_telegram_message(feasible_ideas, len(posts))
+            self.telegram_client.send_message(summary_message)
             
-            print(f"Analysis complete! Found {len(feasible_ideas)} feasible ideas out of {len(posts)} total posts.")
+            # Send individual messages for each feasible idea
+            for i, idea in enumerate(feasible_ideas, 1):
+                individual_message = self.format_individual_idea_message(idea, i)
+                self.telegram_client.send_message(individual_message)
+                print(f"📤 Sent individual message for idea {i}: {idea['title'][:50]}...")
+            
+            print(f"\n📊 FINAL SUMMARY:")
+            print(f"Total posts analyzed: {len(posts)}")
+            print(f"AI-powered ideas found: {len(feasible_ideas)}")
+            print(f"Success rate: {len(feasible_ideas)/len(posts)*100:.1f}%")
+            print(f"Messages sent: {1 + len(feasible_ideas)} (1 summary + {len(feasible_ideas)} individual)")
+            print(f"{'='*80}")
             
         except Exception as e:
             error_message = f"❌ **AppIdeas Bot Error**\n\n" \
