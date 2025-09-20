@@ -18,6 +18,28 @@ EXCLUDE_WORD_LIST = ['DIP','SPY','JPY','WWE','UFC','USD']
 def get_posts_from_subreddit_in_one_week(subreddit):
     return reddit.subreddit(subreddit).search(query='*', sort='new', time_filter='week')
 
+def get_posts_from_subreddit_in_past_24_hours(subreddit):
+    """
+    Fetch all posts from a subreddit from the past 24 hours.
+    
+    :param subreddit: The name of the subreddit
+    :return: A list of posts from the past 24 hours
+    """
+    # Calculate the timestamp for 24 hours ago
+    twenty_four_hours_ago = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
+    twenty_four_hours_ago_timestamp = twenty_four_hours_ago.timestamp()
+    
+    # Get all posts from the subreddit
+    posts = []
+    for post in reddit.subreddit(subreddit).new(limit=100):  # Limit to 100 most recent posts
+        if post.created_utc >= twenty_four_hours_ago_timestamp:
+            posts.append(post)
+        else:
+            # Since posts are sorted by new, we can break early
+            break
+    
+    return posts
+
 def fetch_all_comments(post, expand_level=0):
     """
     Fetch all comments from a given Reddit post.
@@ -86,6 +108,10 @@ class RedditParser:
         return get_posts_from_subreddit_in_one_week(subreddit)
     
     @staticmethod
+    def get_posts_from_subreddit_in_past_24_hours(subreddit):
+        return get_posts_from_subreddit_in_past_24_hours(subreddit)
+    
+    @staticmethod
     def filter_tickers_from_posts_for_today(posts, flair_list):
         return filter_tickers_from_posts_for_today(posts, flair_list)
     
@@ -119,5 +145,5 @@ class RedditParser:
         return download_image(url, save_path)
 
 # Optionally, you can also export the individual functions
-__all__ = ['RedditParser', 'get_posts_from_subreddit_in_one_week', 'filter_tickers_from_posts_for_today', 
-           'filter_ticker_from_post_title', 'get_all_caps_words']
+__all__ = ['RedditParser', 'get_posts_from_subreddit_in_one_week', 'get_posts_from_subreddit_in_past_24_hours', 
+           'filter_tickers_from_posts_for_today', 'filter_ticker_from_post_title', 'get_all_caps_words']
