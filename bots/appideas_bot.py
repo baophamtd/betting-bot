@@ -164,19 +164,31 @@ class AppIdeasBot:
         
         return feasible_ideas
     
-    def format_telegram_message(self, feasible_ideas: List[Dict[str, Any]], total_posts: int) -> str:
+    def format_telegram_message(self, feasible_ideas: List[Dict[str, Any]], total_posts: int, all_posts_with_analysis: List[Dict[str, Any]] = None) -> str:
         """
         Format the feasible ideas into a Telegram message.
         
         :param feasible_ideas: List of feasible ideas
         :param total_posts: Total number of posts analyzed
+        :param all_posts_with_analysis: All posts with their analysis (for showing scores when none qualify)
         :return: Formatted message string
         """
         if not feasible_ideas:
-            return f"📱 **AppIdeas Daily Report** - {datetime.datetime.now().strftime('%Y-%m-%d')}\n\n" \
-                   f"📊 Analyzed {total_posts} posts from r/AppIdeas in the past 24 hours\n\n" \
-                   f"🤖 No AI-powered ideas found today (AI score ≥7 required).\n\n" \
-                   f"Better luck tomorrow! 🍀"
+            message = f"📱 **AppIdeas Daily Report** - {datetime.datetime.now().strftime('%Y-%m-%d')}\n\n" \
+                     f"📊 Analyzed {total_posts} posts from r/AppIdeas in the past 24 hours\n\n" \
+                     f"🤖 No AI-powered ideas found today (AI score ≥7 required).\n\n"
+            
+            # If we have all posts with analysis, show their scores
+            if all_posts_with_analysis:
+                message += f"📈 **Post Scores Summary:**\n"
+                for i, post in enumerate(all_posts_with_analysis, 1):
+                    ai_score = self._extract_ai_score(post.get('analysis', ''))
+                    message += f"{i}. **{post['title'][:50]}{'...' if len(post['title']) > 50 else ''}** - AI Score: {ai_score}/10\n"
+                message += f"\nBetter luck tomorrow! 🍀"
+            else:
+                message += f"Better luck tomorrow! 🍀"
+            
+            return message
         
         message = f"📱 **AppIdeas Daily Report** - {datetime.datetime.now().strftime('%Y-%m-%d')}\n\n"
         message += f"📊 Analyzed {total_posts} posts from r/AppIdeas in the past 24 hours\n"
@@ -283,15 +295,38 @@ class AppIdeasBot:
     
     def _extract_ai_score(self, analysis: str) -> int:
         """Extract the AI Integration score from GPT-5 analysis."""
-        lines = analysis.split('\n')
+        import re
         
-        for line in lines:
-            # Look for AI Integration score pattern
-            if 'ai integration' in line.lower() and ('/10' in line or '/ 10' in line):
-                import re
-                score_match = re.search(r'(\d+)/10', line)
-                if score_match:
-                    return int(score_match.group(1))
+        # Look for various patterns of AI Integration scores
+        patterns = [
+            r'ai integration.*?(\d+)/10',  # AI Integration: 8/10
+            r'ai integration.*?(\d+)/ 10',  # AI Integration: 8/ 10
+            r'(\d+)\.\s*ai integration.*?(\d+)/10',  # 5. AI Integration: 8/10
+            r'(\d+)\.\s*ai integration.*?(\d+)/ 10',  # 5. AI Integration: 8/ 10
+            r'ai integration.*?(\d+)/10',  # AI Integration: 8/10 (case insensitive)
+            r'ai integration.*?(\d+)/ 10',  # AI Integration: 8/ 10 (case insensitive)
+            r'(\d+)\.\s*ai integration.*?(\d+)/10',  # 5. AI Integration: 8/10 (case insensitive)
+            r'(\d+)\.\s*ai integration.*?(\d+)/ 10',  # 5. AI Integration: 8/ 10 (case insensitive)
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, analysis.lower())
+            if matches:
+                # If pattern has two groups, take the second (the score)
+                if len(matches[0]) == 2:
+                    return int(matches[0][1])
+                else:
+                    return int(matches[0])
+        
+        # Try a more general pattern to catch any AI Integration score
+        general_pattern = r'ai integration.*?(\d+)'
+        general_matches = re.findall(general_pattern, analysis.lower())
+        if general_matches:
+            # Look for the score in the context around AI Integration
+            for match in general_matches:
+                score = int(match)
+                if 1 <= score <= 10:  # Valid score range
+                    return score
         
         # If no AI Integration score found, return 0 (will be filtered out)
         return 0
@@ -356,7 +391,7 @@ class AppIdeasBot:
             feasible_ideas = self.filter_feasible_ideas(posts_with_analysis)
             
             # Send summary message first
-            summary_message = self.format_telegram_message(feasible_ideas, len(posts))
+            summary_message = self.format_telegram_message(feasible_ideas, len(posts), posts_with_analysis)
             self.telegram_client.send_message(summary_message)
             
             # Send individual messages for each feasible idea
