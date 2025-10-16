@@ -89,7 +89,14 @@ Once running, you can control the bot via Telegram:
 
 ## ⏰ Scheduled Actions
 
-The bot automatically performs actions at configured times:
+The bot operates in **manual mode** by default - no automatic scheduling:
+
+- **Manual Commands**: Use Telegram commands to control clock actions
+- **No Cron Jobs**: Scheduling is disabled to prevent accidental clock ins
+- **Safe Operation**: Only responds to explicit Telegram commands
+
+### **Optional: Automatic Scheduling**
+To enable automatic scheduling, uncomment the schedule lines in `bots/clock_bot.py`:
 
 - **Clock In**: 9:00 AM (Monday-Friday)
 - **Clock Out**: 5:00 PM (Monday-Friday)

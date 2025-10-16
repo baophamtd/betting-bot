@@ -131,42 +131,44 @@ class ClockBot:
         asyncio.run(self.perform_clock_action("end_lunch", "Scheduled Lunch End"))
 
     def setup_schedule(self):
-        """Setup cron-like scheduling"""
-        self.logger.info("📅 Setting up scheduled tasks...")
+        """Setup cron-like scheduling (DISABLED for manual control only)"""
+        self.logger.info("📅 Scheduled tasks DISABLED - Manual control only")
         
         # Clear existing jobs
         schedule.clear()
         
-        # Add scheduled jobs
-        schedule.every().monday.at(self.clock_in_time).do(self.scheduled_clock_in)
-        schedule.every().tuesday.at(self.clock_in_time).do(self.scheduled_clock_in)
-        schedule.every().wednesday.at(self.clock_in_time).do(self.scheduled_clock_in)
-        schedule.every().thursday.at(self.clock_in_time).do(self.scheduled_clock_in)
-        schedule.every().friday.at(self.clock_in_time).do(self.scheduled_clock_in)
+        # SCHEDULING DISABLED - Only manual Telegram commands will work
+        # Uncomment the lines below to enable automatic scheduling:
         
-        schedule.every().monday.at(self.clock_out_time).do(self.scheduled_clock_out)
-        schedule.every().tuesday.at(self.clock_out_time).do(self.scheduled_clock_out)
-        schedule.every().wednesday.at(self.clock_out_time).do(self.scheduled_clock_out)
-        schedule.every().thursday.at(self.clock_out_time).do(self.scheduled_clock_out)
-        schedule.every().friday.at(self.clock_out_time).do(self.scheduled_clock_out)
+        # schedule.every().monday.at(self.clock_in_time).do(self.scheduled_clock_in)
+        # schedule.every().tuesday.at(self.clock_in_time).do(self.scheduled_clock_in)
+        # schedule.every().wednesday.at(self.clock_in_time).do(self.scheduled_clock_in)
+        # schedule.every().thursday.at(self.clock_in_time).do(self.scheduled_clock_in)
+        # schedule.every().friday.at(self.clock_in_time).do(self.scheduled_clock_in)
         
-        schedule.every().monday.at(self.lunch_start_time).do(self.scheduled_lunch_start)
-        schedule.every().tuesday.at(self.lunch_start_time).do(self.scheduled_lunch_start)
-        schedule.every().wednesday.at(self.lunch_start_time).do(self.scheduled_lunch_start)
-        schedule.every().thursday.at(self.lunch_start_time).do(self.scheduled_lunch_start)
-        schedule.every().friday.at(self.lunch_start_time).do(self.scheduled_lunch_start)
+        # schedule.every().monday.at(self.clock_out_time).do(self.scheduled_clock_out)
+        # schedule.every().tuesday.at(self.clock_out_time).do(self.scheduled_clock_out)
+        # schedule.every().wednesday.at(self.clock_out_time).do(self.scheduled_clock_out)
+        # schedule.every().thursday.at(self.clock_out_time).do(self.scheduled_clock_out)
+        # schedule.every().friday.at(self.clock_out_time).do(self.scheduled_clock_out)
         
-        schedule.every().monday.at(self.lunch_end_time).do(self.scheduled_lunch_end)
-        schedule.every().tuesday.at(self.lunch_end_time).do(self.scheduled_lunch_end)
-        schedule.every().wednesday.at(self.lunch_end_time).do(self.scheduled_lunch_end)
-        schedule.every().thursday.at(self.lunch_end_time).do(self.scheduled_lunch_end)
-        schedule.every().friday.at(self.lunch_end_time).do(self.scheduled_lunch_end)
+        # schedule.every().monday.at(self.lunch_start_time).do(self.scheduled_lunch_start)
+        # schedule.every().tuesday.at(self.lunch_start_time).do(self.scheduled_lunch_start)
+        # schedule.every().wednesday.at(self.lunch_start_time).do(self.scheduled_lunch_start)
+        # schedule.every().thursday.at(self.lunch_start_time).do(self.scheduled_lunch_start)
+        # schedule.every().friday.at(self.lunch_start_time).do(self.scheduled_lunch_start)
         
-        self.logger.info(f"📅 Schedule configured:")
-        self.logger.info(f"   Clock In: {self.clock_in_time} (Mon-Fri)")
-        self.logger.info(f"   Clock Out: {self.clock_out_time} (Mon-Fri)")
-        self.logger.info(f"   Lunch Start: {self.lunch_start_time} (Mon-Fri)")
-        self.logger.info(f"   Lunch End: {self.lunch_end_time} (Mon-Fri)")
+        # schedule.every().monday.at(self.lunch_end_time).do(self.scheduled_lunch_end)
+        # schedule.every().tuesday.at(self.lunch_end_time).do(self.scheduled_lunch_end)
+        # schedule.every().wednesday.at(self.lunch_end_time).do(self.scheduled_lunch_end)
+        # schedule.every().thursday.at(self.lunch_end_time).do(self.scheduled_lunch_end)
+        # schedule.every().friday.at(self.lunch_end_time).do(self.scheduled_lunch_end)
+        
+        self.logger.info(f"📅 Schedule DISABLED - Use Telegram commands:")
+        self.logger.info(f"   /clockin - Clock in manually")
+        self.logger.info(f"   /clockout - Clock out manually") 
+        self.logger.info(f"   /lunchstart - Start lunch manually")
+        self.logger.info(f"   /lunchend - End lunch manually")
 
     async def start_telegram_bot(self):
         """Start the Telegram bot for manual control"""
@@ -177,11 +179,15 @@ class ClockBot:
             # Send startup notification
             await self.send_telegram_notification(
                 "🚀 **Clock Bot Started!**\n"
-                f"📅 Schedule:\n"
-                f"• Clock In: {self.clock_in_time} (Mon-Fri)\n"
-                f"• Clock Out: {self.clock_out_time} (Mon-Fri)\n"
-                f"• Lunch: {self.lunch_start_time} - {self.lunch_end_time} (Mon-Fri)\n\n"
-                f"Use /help for manual commands!"
+                f"📅 **Scheduling DISABLED** - Manual control only\n\n"
+                f"**Available Commands:**\n"
+                f"• /clockin - Clock in manually\n"
+                f"• /clockout - Clock out manually\n"
+                f"• /lunchstart - Start lunch manually\n"
+                f"• /lunchend - End lunch manually\n"
+                f"• /status - Check current status\n"
+                f"• /help - Show all commands\n\n"
+                f"Use /help for more details!"
             )
             
             # Run Telegram bot (this will block)
