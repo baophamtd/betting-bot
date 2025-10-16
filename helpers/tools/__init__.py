@@ -1,1 +1,1 @@
-from .reddit_parser import RedditParser
+# Empty file - import modules directly where needed to avoid eager loading
