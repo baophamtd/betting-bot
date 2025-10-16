@@ -116,19 +116,35 @@ class ClockBot:
 
     def scheduled_clock_in(self):
         """Scheduled clock in (runs in background thread)"""
-        asyncio.run(self.perform_clock_action("clock_in", "Scheduled Clock In"))
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.create_task(self.perform_clock_action("clock_in", "Scheduled Clock In"))
+        else:
+            asyncio.run(self.perform_clock_action("clock_in", "Scheduled Clock In"))
 
     def scheduled_clock_out(self):
         """Scheduled clock out (runs in background thread)"""
-        asyncio.run(self.perform_clock_action("clock_out", "Scheduled Clock Out"))
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.create_task(self.perform_clock_action("clock_out", "Scheduled Clock Out"))
+        else:
+            asyncio.run(self.perform_clock_action("clock_out", "Scheduled Clock Out"))
 
     def scheduled_lunch_start(self):
         """Scheduled lunch start (runs in background thread)"""
-        asyncio.run(self.perform_clock_action("start_lunch", "Scheduled Lunch Start"))
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.create_task(self.perform_clock_action("start_lunch", "Scheduled Lunch Start"))
+        else:
+            asyncio.run(self.perform_clock_action("start_lunch", "Scheduled Lunch Start"))
 
     def scheduled_lunch_end(self):
         """Scheduled lunch end (runs in background thread)"""
-        asyncio.run(self.perform_clock_action("end_lunch", "Scheduled Lunch End"))
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.create_task(self.perform_clock_action("end_lunch", "Scheduled Lunch End"))
+        else:
+            asyncio.run(self.perform_clock_action("end_lunch", "Scheduled Lunch End"))
 
     def setup_schedule(self):
         """Setup cron-like scheduling (DISABLED for manual control only)"""
