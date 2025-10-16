@@ -182,7 +182,7 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
         user_name = self.get_user_name(chat_id)
         await update.message.reply_text(f"✅ Received your command, {user_name}! Processing...")
         await update.message.reply_text("🕕 Starting clock out process...")
-        await self.perform_clock_action(update, "clock_out", "Clock Out")
+        await self.perform_clock_action(update, user_name, "clock_out")
 
     async def lunch_start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /lunchstart command"""
@@ -196,7 +196,7 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
         user_name = self.get_user_name(chat_id)
         await update.message.reply_text(f"✅ Received your command, {user_name}! Processing...")
         await update.message.reply_text("🍽️ Starting lunch break...")
-        await self.perform_clock_action(update, "start_lunch", "Start Lunch")
+        await self.perform_clock_action(update, user_name, "start_lunch")
 
     async def lunch_end_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /lunchend command"""
@@ -210,12 +210,14 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
         user_name = self.get_user_name(chat_id)
         await update.message.reply_text(f"✅ Received your command, {user_name}! Processing...")
         await update.message.reply_text("🍽️ Ending lunch break...")
-        await self.perform_clock_action(update, "end_lunch", "End Lunch")
+        await self.perform_clock_action(update, user_name, "end_lunch")
 
     async def skip_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /skip command"""
+        chat_id = update.effective_chat.id
+        user_name = self.get_user_name(chat_id)
         await update.message.reply_text("🔄 Clicking 'Skip for Now' button...")
-        await self.perform_clock_action(update, "handle_skip_for_now", "Skip for Now")
+        await self.perform_clock_action(update, user_name, "handle_skip_for_now")
 
     async def screenshot_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /screenshot command"""
@@ -319,17 +321,17 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
                 self.paylocity_client.close()
                 self.paylocity_client = None
 
-    async def perform_clock_action(self, update: Update, action_name: str, display_name: str):
+    async def perform_clock_action(self, update: Update, user_name: str, action_name: str):
         """Perform a clock action and send result"""
         try:
             if not self.paylocity_client:
                 self.paylocity_client = PaylocityClient(headless=True)
                 if not self.paylocity_client.start():
-                    await update.message.reply_text(f"❌ Failed to start browser for {display_name}")
+                    await update.message.reply_text(f"❌ Failed to start browser for {action_name}")
                     return
             
             if not self.paylocity_client.login():
-                await update.message.reply_text(f"❌ Failed to login to Paylocity for {display_name}")
+                await update.message.reply_text(f"❌ Failed to login to Paylocity for {action_name}")
                 return
                 
             # Perform the action
@@ -337,20 +339,22 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
             success = action_method()
             
             if success:
-                await update.message.reply_text(
-                    f"✅ **{display_name} Successful!**\n"
+                message = (
+                    f"✅ **{action_name.replace('_', ' ').title()} Successful!**\n"
                     f"🕐 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
                 )
+                await update.message.reply_text(self.add_kiss_reminder(message, user_name))
             else:
-                await update.message.reply_text(
-                    f"❌ **{display_name} Failed**\n"
+                message = (
+                    f"❌ **{action_name.replace('_', ' ').title()} Failed**\n"
                     f"🕐 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
                     f"💡 The button might not be available or you're already in that state."
                 )
+                await update.message.reply_text(message)
                 
         except Exception as e:
             await update.message.reply_text(
-                f"❌ **{display_name} Error:** {str(e)}\n"
+                f"❌ **{action_name.replace('_', ' ').title()} Error:** {str(e)}\n"
                 f"🕐 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
             )
         finally:
