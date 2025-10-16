@@ -342,12 +342,16 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
         )
 
     async def send_notification(self, message: str):
-        """Send notification to configured chat"""
+        """Send notification to all allowed chat IDs"""
         try:
             bot = Bot(token=self.token)
-            await bot.send_message(chat_id=self.chat_id, text=message, parse_mode='Markdown')
+            for chat_id in self.allowed_chat_ids:
+                try:
+                    await bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
+                except Exception as e:
+                    self.logger.error(f"❌ Failed to send notification to {chat_id}: {e}")
         except Exception as e:
-            self.logger.error(f"❌ Failed to send notification: {e}")
+            self.logger.error(f"❌ Failed to create bot for notifications: {e}")
 
     def run(self):
         """Start the Telegram bot"""
