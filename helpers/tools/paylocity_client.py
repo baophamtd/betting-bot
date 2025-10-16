@@ -359,6 +359,69 @@ class PaylocityClient:
             self.logger.error(f"❌ Clock in failed: {e}")
             return False
 
+    def locate_clock_out_button(self):
+        """Locate the Clock out button without clicking it"""
+        try:
+            self.logger.info("🕐 Looking for Clock out button...")
+            
+            # Look for clock out button
+            clock_out_selectors = [
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock out')]",
+                "//button[text()='clock out']",
+                "//button[contains(text(), 'Clock out')]",
+                "//button[contains(text(), 'clock out')]",
+                "//button[contains(@class, 'clock-out')]",
+                "//input[@value='Clock out']",
+                "//button[contains(@id, 'clock-out')]"
+            ]
+            
+            for selector in clock_out_selectors:
+                try:
+                    button = self.driver.find_element(By.XPATH, selector)
+                    if button.is_displayed() and button.is_enabled():
+                        self.logger.info(f"✅ Found Clock out button: {selector}")
+                        self.logger.info(f"   Button text: '{button.text}'")
+                        self.logger.info(f"   Button enabled: {button.is_enabled()}")
+                        self.logger.info(f"   Button displayed: {button.is_displayed()}")
+                        return True
+                        
+                except NoSuchElementException:
+                    continue
+            
+            # If no Clock out button found, check what buttons are actually available
+            self.logger.info("🔍 No Clock out button found. Checking available time-related buttons...")
+            available_buttons = []
+            
+            # Look for common time-related buttons
+            time_button_selectors = [
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock in')]",
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock out')]",
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'start lunch')]",
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'end lunch')]",
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'lunch')]"
+            ]
+            
+            for selector in time_button_selectors:
+                try:
+                    buttons = self.driver.find_elements(By.XPATH, selector)
+                    for button in buttons:
+                        if button.is_displayed():
+                            available_buttons.append(f"'{button.text}' (enabled: {button.is_enabled()})")
+                except:
+                    continue
+            
+            if available_buttons:
+                self.logger.info(f"📋 Available time-related buttons: {', '.join(available_buttons)}")
+            else:
+                self.logger.info("📋 No time-related buttons found on current page")
+                    
+            self.logger.warning("⚠️ Clock out button not found - user may not be clocked in")
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"❌ Locate clock out button failed: {e}")
+            return False
+
     def clock_out(self):
         """Clock out action"""
         try:
@@ -367,6 +430,9 @@ class PaylocityClient:
             # Look for clock out button (case insensitive)
             clock_out_selectors = [
                 "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock out')]",
+                "//button[text()='clock out']",
+                "//button[contains(text(), 'Clock out')]",
+                "//button[contains(text(), 'clock out')]",
                 "//input[contains(translate(@value, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock out')]",
                 "//a[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock out')]",
                 "//button[contains(@class, 'clock-out')]",
@@ -380,30 +446,13 @@ class PaylocityClient:
                         self.logger.info(f"✅ Found Clock Out button: {selector}")
                         button.click()
                         time.sleep(2)
-                        
-                        # Look for success confirmation
-                        success_indicators = [
-                            "//div[contains(text(), 'Clocked Out')]",
-                            "//div[contains(text(), 'success')]",
-                            "//span[contains(text(), 'Clocked Out')]"
-                        ]
-                        
-                        for success_selector in success_indicators:
-                            try:
-                                success_elem = self.driver.find_element(By.XPATH, success_selector)
-                                if success_elem.is_displayed():
-                                    self.logger.info("✅ Clock out successful!")
-                                    return True
-                            except NoSuchElementException:
-                                continue
-                        
-                        self.logger.info("✅ Clock out button clicked")
+                        self.logger.info("✅ Clocked out!")
                         return True
                         
                 except NoSuchElementException:
                     continue
                     
-            self.logger.warning("⚠️ Clock Out button not found or not available")
+            self.logger.warning("⚠️ Clock out button not found or not available")
             return False
             
         except Exception as e:
@@ -447,6 +496,69 @@ class PaylocityClient:
             self.logger.error(f"❌ Start lunch failed: {e}")
             return False
 
+    def locate_lunch_end_button(self):
+        """Locate the End Lunch button without clicking it"""
+        try:
+            self.logger.info("🍽️ Looking for End Lunch button...")
+            
+            # Look for lunch end button
+            lunch_end_selectors = [
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'end lunch')]",
+                "//button[contains(text(), 'End Lunch')]",
+                "//button[contains(text(), 'end lunch')]",
+                "//button[contains(text(), 'Lunch In')]",
+                "//button[contains(@class, 'lunch-end')]",
+                "//input[@value='End Lunch']",
+                "//button[contains(@id, 'lunch-end')]"
+            ]
+            
+            for selector in lunch_end_selectors:
+                try:
+                    button = self.driver.find_element(By.XPATH, selector)
+                    if button.is_displayed() and button.is_enabled():
+                        self.logger.info(f"✅ Found End Lunch button: {selector}")
+                        self.logger.info(f"   Button text: '{button.text}'")
+                        self.logger.info(f"   Button enabled: {button.is_enabled()}")
+                        self.logger.info(f"   Button displayed: {button.is_displayed()}")
+                        return True
+                        
+                except NoSuchElementException:
+                    continue
+            
+            # If no End Lunch button found, check what buttons are actually available
+            self.logger.info("🔍 No End Lunch button found. Checking available time-related buttons...")
+            available_buttons = []
+            
+            # Look for common time-related buttons
+            time_button_selectors = [
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock in')]",
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock out')]",
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'start lunch')]",
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'end lunch')]",
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'lunch')]"
+            ]
+            
+            for selector in time_button_selectors:
+                try:
+                    buttons = self.driver.find_elements(By.XPATH, selector)
+                    for button in buttons:
+                        if button.is_displayed():
+                            available_buttons.append(f"'{button.text}' (enabled: {button.is_enabled()})")
+                except:
+                    continue
+            
+            if available_buttons:
+                self.logger.info(f"📋 Available time-related buttons: {', '.join(available_buttons)}")
+            else:
+                self.logger.info("📋 No time-related buttons found on current page")
+                    
+            self.logger.warning("⚠️ End Lunch button not found - user may not be currently on lunch")
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"❌ Locate lunch end button failed: {e}")
+            return False
+
     def end_lunch(self):
         """End lunch break"""
         try:
@@ -457,7 +569,9 @@ class PaylocityClient:
                 
             # Look for lunch end button
             lunch_end_selectors = [
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'end lunch')]",
                 "//button[contains(text(), 'End Lunch')]",
+                "//button[contains(text(), 'end lunch')]",
                 "//button[contains(text(), 'Lunch In')]",
                 "//button[contains(@class, 'lunch-end')]",
                 "//input[@value='End Lunch']",
