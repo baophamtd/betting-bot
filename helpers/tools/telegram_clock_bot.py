@@ -44,6 +44,7 @@ class TelegramClockBot:
         self.application.add_handler(CommandHandler("clockout", self.clock_out_command))
         self.application.add_handler(CommandHandler("lunchstart", self.lunch_start_command))
         self.application.add_handler(CommandHandler("lunchend", self.lunch_end_command))
+        self.application.add_handler(CommandHandler("skip", self.skip_command))
         self.application.add_handler(CommandHandler("screenshot", self.screenshot_command))
         
         # Message handler for unknown commands
@@ -62,6 +63,7 @@ Welcome! I can help you automate your clock in/out on Paylocity.
 • `/lunchstart` - Start lunch break
 • `/lunchend` - End lunch break
 • `/status` - Check current status
+• `/skip` - Click "Skip for Now" button
 • `/screenshot` - Take a screenshot
 • `/help` - Show this help
 
@@ -80,7 +82,8 @@ Welcome! I can help you automate your clock in/out on Paylocity.
 • `/lunchstart` - Start your lunch break
 • `/lunchend` - End your lunch break
 
-**Information:**
+**Utilities:**
+• `/skip` - Click "Skip for Now" button (if it appears)
 • `/status` - Check your current clock status
 • `/screenshot` - Take a screenshot of current page
 
@@ -139,6 +142,11 @@ Welcome! I can help you automate your clock in/out on Paylocity.
         """Handle /lunchend command"""
         await update.message.reply_text("🍽️ Ending lunch break...")
         await self.perform_clock_action(update, "end_lunch", "End Lunch")
+
+    async def skip_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle /skip command"""
+        await update.message.reply_text("🔄 Clicking 'Skip for Now' button...")
+        await self.perform_clock_action(update, "handle_skip_for_now", "Skip for Now")
 
     async def screenshot_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /screenshot command"""
