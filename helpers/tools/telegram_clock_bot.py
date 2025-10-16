@@ -372,17 +372,20 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
         )
 
     async def send_notification(self, message: str):
-        """Send notification to all allowed chat IDs"""
+        """Send notification to Aymee only"""
         try:
             from telegram import Bot
             bot = Bot(token=self.token)
-            for chat_id in self.allowed_chat_ids:
+            # Only send to Aymee
+            aymee_id = os.getenv('AYMEE_TELEGRAM_ID')
+            if aymee_id:
                 try:
-                    await bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
+                    await bot.send_message(chat_id=aymee_id, text=message, parse_mode='Markdown')
+                    self.logger.info(f"📤 Notification sent to Aymee")
                 except Exception as e:
-                    self.logger.error(f"❌ Failed to send notification to {chat_id}: {e}")
+                    self.logger.error(f"❌ Failed to send notification to Aymee: {e}")
         except Exception as e:
-            self.logger.error(f"❌ Failed to create bot for notifications: {e}")
+            self.logger.error(f"❌ Failed to send notifications: {e}")
 
     def run(self):
         """Start the Telegram bot"""
