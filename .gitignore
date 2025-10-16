@@ -70,3 +70,5 @@ tests/find_*.py
 # Documentation files (keep in docs/ but don't commit individual files)
 docs/*.md
 !docs/UBUNTU_DEPLOYMENT.md
+!docs/CLOCK_BOT_SETUP.md
+!docs/CLOCK_BOT_SUMMARY.md

@@ -60,8 +60,8 @@
 ### **Environment Variables** (`.env`)
 ```bash
 # Paylocity credentials
-PAYLOCITY_COMPANY_ID=301469
-PAYLOCITY_USERNAME=avarela
+PAYLOCITY_COMPANY_ID=your_company_id
+PAYLOCITY_USERNAME=your_paylocity_username
 PAYLOCITY_PASSWORD=your_password
 
 # Telegram Bot

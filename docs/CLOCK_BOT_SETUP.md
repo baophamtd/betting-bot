@@ -33,9 +33,9 @@ cp env.example .env
 Edit `.env` with your credentials:
 
 ```bash
-# Paylocity credentials (from the screenshot)
-PAYLOCITY_COMPANY_ID=301469
-PAYLOCITY_USERNAME=avarela
+# Paylocity credentials
+PAYLOCITY_COMPANY_ID=your_company_id
+PAYLOCITY_USERNAME=your_paylocity_username
 PAYLOCITY_PASSWORD=your_password
 
 # Telegram Bot credentials (using existing BAO credentials)
