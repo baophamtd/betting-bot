@@ -167,8 +167,8 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
         user_name = self.get_user_name(chat_id)
         # Immediate acknowledgment
         await update.message.reply_text(f"✅ Received your command, {user_name}! Processing...")
-        await update.message.reply_text(f"🕐 Locating Clock In button...")
-        await self.locate_clock_in_button(update, user_name)
+        await update.message.reply_text(f"🕐 Clocking in...")
+        await self.perform_clock_action(update, user_name, 'clock_in')
 
     async def clock_out_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /clockout command"""
