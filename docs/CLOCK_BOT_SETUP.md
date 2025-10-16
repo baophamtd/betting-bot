@@ -38,9 +38,13 @@ PAYLOCITY_COMPANY_ID=your_company_id
 PAYLOCITY_USERNAME=your_paylocity_username
 PAYLOCITY_PASSWORD=your_password
 
-# Telegram Bot credentials (using existing BAO credentials)
+# Telegram Bot credentials
 BAO_TELEGRAM_TOKEN=your_bot_token
 BAO_TELEGRAM_ID=your_chat_id
+
+# Aymee's Clock Bot credentials (@paylocity_clock_bot)
+AYMEE_TELEGRAM_TOKEN=aymee_bot_token
+AYMEE_TELEGRAM_ID=aymee_chat_id
 
 # Schedule times (24-hour format)
 CLOCK_IN_TIME=09:00

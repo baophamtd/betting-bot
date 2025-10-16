@@ -22,7 +22,8 @@ load_dotenv()
 
 class TelegramClockBot:
     def __init__(self):
-        self.token = os.getenv('BAO_TELEGRAM_TOKEN')
+        # Use Aymee's bot token for @paylocity_clock_bot
+        self.token = os.getenv('AYMEE_TELEGRAM_TOKEN')
         self.allowed_chat_ids = []
         
         # Add Bao's chat ID
@@ -40,7 +41,7 @@ class TelegramClockBot:
         
         if not self.token or not self.allowed_chat_ids:
             self.logger.error("❌ Missing Telegram credentials in .env file")
-            raise ValueError("Missing BAO_TELEGRAM_TOKEN, BAO_TELEGRAM_ID, or AYMEE_TELEGRAM_ID")
+            raise ValueError("Missing AYMEE_TELEGRAM_TOKEN, BAO_TELEGRAM_ID, or AYMEE_TELEGRAM_ID")
             
         self.application = Application.builder().token(self.token).build()
         self.setup_handlers()
@@ -373,6 +374,7 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
     async def send_notification(self, message: str):
         """Send notification to all allowed chat IDs"""
         try:
+            from telegram import Bot
             bot = Bot(token=self.token)
             for chat_id in self.allowed_chat_ids:
                 try:
