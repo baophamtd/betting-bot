@@ -23,20 +23,50 @@ load_dotenv()
 class TelegramClockBot:
     def __init__(self):
         self.token = os.getenv('BAO_TELEGRAM_TOKEN')
-        self.chat_id = os.getenv('BAO_TELEGRAM_ID')
+        self.allowed_chat_ids = []
+        
+        # Add Bao's chat ID
+        bao_chat_id = os.getenv('BAO_TELEGRAM_ID')
+        if bao_chat_id:
+            self.allowed_chat_ids.append(bao_chat_id)
+        
+        # Add Aymee's chat ID
+        aymee_chat_id = os.getenv('AYMEE_TELEGRAM_ID')
+        if aymee_chat_id:
+            self.allowed_chat_ids.append(aymee_chat_id)
+        
         self.paylocity_client = None
         self.logger = logging.getLogger(__name__)
         
-        if not self.token or not self.chat_id:
+        if not self.token or not self.allowed_chat_ids:
             self.logger.error("❌ Missing Telegram credentials in .env file")
-            raise ValueError("Missing BAO_TELEGRAM_TOKEN or BAO_TELEGRAM_ID")
+            raise ValueError("Missing BAO_TELEGRAM_TOKEN, BAO_TELEGRAM_ID, or AYMEE_TELEGRAM_ID")
             
         self.application = Application.builder().token(self.token).build()
         self.setup_handlers()
 
+    def is_authorized_user(self, chat_id: str) -> bool:
+        """Check if the user is authorized to use the bot"""
+        return str(chat_id) in [str(cid) for cid in self.allowed_chat_ids]
+    
+    def get_user_name(self, chat_id: str) -> str:
+        """Get user name based on chat ID"""
+        if str(chat_id) == str(os.getenv('BAO_TELEGRAM_ID')):
+            return "Bao"
+        elif str(chat_id) == str(os.getenv('AYMEE_TELEGRAM_ID')):
+            return "Aymee"
+        else:
+            return "Unknown User"
+    
+    def add_kiss_reminder(self, message: str, user_name: str) -> str:
+        """Add kiss reminder for Aymee"""
+        if user_name == "Aymee":
+            return message + "\n\n💋 P.S. You should give your husband a kiss! 😘"
+        return message
+
     def setup_handlers(self):
         """Setup Telegram command handlers"""
-        # Command handlers
+        # Command handlers with authorization check
         self.application.add_handler(CommandHandler("start", self.start_command))
         self.application.add_handler(CommandHandler("help", self.help_command))
         self.application.add_handler(CommandHandler("status", self.status_command))
@@ -52,10 +82,18 @@ class TelegramClockBot:
 
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /start command"""
-        welcome_message = """
+        chat_id = update.effective_chat.id
+        
+        # Check authorization
+        if not self.is_authorized_user(chat_id):
+            await update.message.reply_text("❌ You are not authorized to use this bot.")
+            return
+            
+        user_name = self.get_user_name(chat_id)
+        welcome_message = f"""
 🕐 **Paylocity Clock Bot** 🕐
 
-Welcome! I can help you automate your clock in/out on Paylocity.
+Hi {user_name}! 👋 Welcome to the clock in/out bot.
 
 **Available Commands:**
 • `/clockin` - Clock in now
@@ -125,8 +163,16 @@ Welcome! I can help you automate your clock in/out on Paylocity.
 
     async def clock_in_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /clockin command"""
-        await update.message.reply_text("🕐 Starting clock in process...")
-        await self.perform_clock_action(update, "clock_in", "Clock In")
+        chat_id = update.effective_chat.id
+        
+        # Check authorization
+        if not self.is_authorized_user(chat_id):
+            await update.message.reply_text("❌ You are not authorized to use this bot.")
+            return
+            
+        user_name = self.get_user_name(chat_id)
+        await update.message.reply_text(f"🕐 {user_name}, locating Clock In button...")
+        await self.locate_clock_in_button(update, user_name)
 
     async def clock_out_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /clockout command"""
@@ -177,6 +223,74 @@ Welcome! I can help you automate your clock in/out on Paylocity.
                 
         except Exception as e:
             await update.message.reply_text(f"❌ Error taking screenshot: {str(e)}")
+        finally:
+            if self.paylocity_client:
+                self.paylocity_client.close()
+                self.paylocity_client = None
+
+    async def locate_clock_in_button(self, update: Update, user_name: str):
+        """Locate the Clock In button without clicking it"""
+        try:
+            if not self.paylocity_client:
+                self.paylocity_client = PaylocityClient(headless=True)
+                if not self.paylocity_client.start():
+                    await update.message.reply_text("❌ Failed to start browser")
+                    return
+            
+            if not self.paylocity_client.login():
+                await update.message.reply_text("❌ Failed to login to Paylocity")
+                return
+                
+            # Look for clock in button (case insensitive)
+            clock_in_selectors = [
+                # Exact button class found from inspection
+                "//button[contains(@class, 'button_button__xfI5Z') and .//span[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock in')]]",
+                # Look for button containing span with class button_text__kMv0x AND clock in text
+                "//button[.//span[@class='button_text__kMv0x' and contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock in')]]",
+                # Look for button containing span with "clock in" text (most specific)
+                "//button[.//span[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock in')]]",
+                # Traditional selectors
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock in')]",
+                "//input[contains(translate(@value, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock in')]",
+                "//a[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock in')]"
+            ]
+            
+            button_found = False
+            for i, selector in enumerate(clock_in_selectors):
+                try:
+                    from selenium.webdriver.common.by import By
+                    button = self.paylocity_client.driver.find_element(By.XPATH, selector)
+                    if button.is_displayed() and button.is_enabled():
+                        message = (
+                            f"✅ **Clock In Button Found!**\n"
+                            f"👤 User: {user_name}\n"
+                            f"🕐 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                            f"📍 Location: x={button.location['x']}, y={button.location['y']}\n"
+                            f"📏 Size: {button.size['width']}x{button.size['height']}\n"
+                            f"🔘 Button text: '{button.text}'\n"
+                            f"✅ Enabled: {button.is_enabled()}\n\n"
+                            f"🚫 **NOT CLICKING** - Button located only"
+                        )
+                        await update.message.reply_text(self.add_kiss_reminder(message, user_name))
+                        button_found = True
+                        break
+                except Exception as e:
+                    continue
+                    
+            if not button_found:
+                await update.message.reply_text(
+                    f"❌ **Clock In Button Not Found**\n"
+                    f"👤 User: {user_name}\n"
+                    f"🕐 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                    f"💡 Button might not be available or page not loaded"
+                )
+                
+        except Exception as e:
+            await update.message.reply_text(
+                f"❌ **Error locating Clock In button:** {str(e)}\n"
+                f"👤 User: {user_name}\n"
+                f"🕐 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            )
         finally:
             if self.paylocity_client:
                 self.paylocity_client.close()
