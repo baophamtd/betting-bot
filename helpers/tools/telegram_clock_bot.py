@@ -5,25 +5,31 @@ Handles Telegram commands and notifications for Paylocity automation
 
 import logging
 import os
+import sys
+from pathlib import Path
 from telegram import Update, Bot
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from dotenv import load_dotenv
 from datetime import datetime
 import asyncio
+
+# Add current directory to path for imports
+current_dir = Path(__file__).parent
+sys.path.append(str(current_dir))
 from paylocity_client import PaylocityClient
 
 load_dotenv()
 
 class TelegramClockBot:
     def __init__(self):
-        self.token = os.getenv('TELEGRAM_BOT_TOKEN')
-        self.chat_id = os.getenv('TELEGRAM_CHAT_ID')
+        self.token = os.getenv('BAO_TELEGRAM_TOKEN')
+        self.chat_id = os.getenv('BAO_TELEGRAM_ID')
         self.paylocity_client = None
         self.logger = logging.getLogger(__name__)
         
         if not self.token or not self.chat_id:
             self.logger.error("❌ Missing Telegram credentials in .env file")
-            raise ValueError("Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID")
+            raise ValueError("Missing BAO_TELEGRAM_TOKEN or BAO_TELEGRAM_ID")
             
         self.application = Application.builder().token(self.token).build()
         self.setup_handlers()

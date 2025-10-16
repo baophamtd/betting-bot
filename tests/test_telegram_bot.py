@@ -19,14 +19,14 @@ async def test_telegram_bot():
     print("📱 Testing Telegram Bot...")
     
     # Check credentials
-    bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
-    chat_id = os.getenv('TELEGRAM_CHAT_ID')
+    bot_token = os.getenv('BAO_TELEGRAM_TOKEN')
+    chat_id = os.getenv('BAO_TELEGRAM_ID')
     
     if not bot_token or not chat_id:
         print("❌ Missing Telegram credentials!")
         print("Please add to .env file:")
-        print("TELEGRAM_BOT_TOKEN=your_bot_token")
-        print("TELEGRAM_CHAT_ID=your_chat_id")
+        print("BAO_TELEGRAM_TOKEN=your_bot_token")
+        print("BAO_TELEGRAM_ID=your_chat_id")
         return False
     
     print(f"✅ Telegram credentials found")

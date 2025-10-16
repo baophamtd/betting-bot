@@ -53,8 +53,9 @@ class PaylocityClient:
             
             # Anti-detection options
             options.add_argument('--disable-blink-features=AutomationControlled')
-            options.add_experimental_option("excludeSwitches", ["enable-automation"])
-            options.add_experimental_option('useAutomationExtension', False)
+            # Remove problematic options for compatibility
+            # options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            # options.add_experimental_option('useAutomationExtension', False)
             
             self.driver = uc.Chrome(options=options)
             self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")

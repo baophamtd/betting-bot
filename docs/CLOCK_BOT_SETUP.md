@@ -38,9 +38,9 @@ PAYLOCITY_COMPANY_ID=301469
 PAYLOCITY_USERNAME=avarela
 PAYLOCITY_PASSWORD=your_password
 
-# Telegram Bot credentials
-TELEGRAM_BOT_TOKEN=your_bot_token
-TELEGRAM_CHAT_ID=your_chat_id
+# Telegram Bot credentials (using existing BAO credentials)
+BAO_TELEGRAM_TOKEN=your_bot_token
+BAO_TELEGRAM_ID=your_chat_id
 
 # Schedule times (24-hour format)
 CLOCK_IN_TIME=09:00
