@@ -26,12 +26,7 @@ class TelegramClockBot:
         self.token = os.getenv('AYMEE_TELEGRAM_TOKEN')
         self.allowed_chat_ids = []
         
-        # Add Bao's chat ID
-        bao_chat_id = os.getenv('BAO_TELEGRAM_ID')
-        if bao_chat_id:
-            self.allowed_chat_ids.append(bao_chat_id)
-        
-        # Add Aymee's chat ID
+        # Only Aymee can use this bot
         aymee_chat_id = os.getenv('AYMEE_TELEGRAM_ID')
         if aymee_chat_id:
             self.allowed_chat_ids.append(aymee_chat_id)
@@ -41,7 +36,7 @@ class TelegramClockBot:
         
         if not self.token or not self.allowed_chat_ids:
             self.logger.error("❌ Missing Telegram credentials in .env file")
-            raise ValueError("Missing AYMEE_TELEGRAM_TOKEN, BAO_TELEGRAM_ID, or AYMEE_TELEGRAM_ID")
+            raise ValueError("Missing AYMEE_TELEGRAM_TOKEN or AYMEE_TELEGRAM_ID")
             
         self.application = Application.builder().token(self.token).build()
         self.setup_handlers()
@@ -52,9 +47,7 @@ class TelegramClockBot:
     
     def get_user_name(self, chat_id: str) -> str:
         """Get user name based on chat ID"""
-        if str(chat_id) == str(os.getenv('BAO_TELEGRAM_ID')):
-            return "Bao"
-        elif str(chat_id) == str(os.getenv('AYMEE_TELEGRAM_ID')):
+        if str(chat_id) == str(os.getenv('AYMEE_TELEGRAM_ID')):
             return "Aymee"
         else:
             return "Unknown User"
