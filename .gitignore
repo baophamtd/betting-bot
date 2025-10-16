@@ -1,0 +1,72 @@
+# Python-related files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.env
+
+# IDE-specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# Build and distribution directories
+build/
+dist/
+*.egg-info/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Miscellaneous
+*.bak
+*.tmp
+*.temp
+
+# Ignore bin folder
+bin/
+
+# Ignore lib folder
+lib/
+
+# Ignore pyvenv.cfg
+pyvenv.cfg
+
+# Ignore reddit comments
+bots/analyzing_results/
+bots/potd_data/
+betting-bot-env/include/site/python3.9/greenlet/greenlet.h
+.aider*
+logs/
+
+# Test files and temporary development files
+tests/test_*.py
+tests/inspect_*.py
+tests/find_*.py
+*.png
+*.html
+
+# Documentation files (keep in docs/ but don't commit individual files)
+docs/*.md
+!docs/UBUNTU_DEPLOYMENT.md
