@@ -45,7 +45,7 @@ class PaylocityClient:
         try:
             options = uc.ChromeOptions()
             if self.headless:
-                options.add_argument('--headless')
+                options.add_argument('--headless=new')  # Use new headless mode
                 options.add_argument('--no-sandbox')
                 options.add_argument('--disable-dev-shm-usage')
                 options.add_argument('--disable-gpu')
@@ -53,11 +53,41 @@ class PaylocityClient:
             
             # Anti-detection options
             options.add_argument('--disable-blink-features=AutomationControlled')
-            # Remove problematic options for compatibility
-            # options.add_experimental_option("excludeSwitches", ["enable-automation"])
-            # options.add_experimental_option('useAutomationExtension', False)
             
-            self.driver = uc.Chrome(options=options)
+            # Try to find Chrome binary explicitly (helps with auto-update issues)
+            import platform
+            system = platform.system()
+            
+            # Common Chrome binary locations by OS
+            chrome_paths = {
+                'Linux': [
+                    '/usr/bin/google-chrome',
+                    '/usr/bin/chromium-browser',
+                    '/usr/bin/chromium',
+                    '/snap/bin/chromium'
+                ],
+                'Darwin': [  # macOS
+                    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+                    '/Applications/Chromium.app/Contents/MacOS/Chromium'
+                ],
+                'Windows': [
+                    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+                    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+                ]
+            }
+            
+            # Try to find Chrome binary
+            chrome_binary = None
+            for path in chrome_paths.get(system, []):
+                if os.path.exists(path):
+                    chrome_binary = path
+                    self.logger.info(f"🔍 Found Chrome at: {path}")
+                    break
+            
+            if chrome_binary:
+                options.binary_location = chrome_binary
+            
+            self.driver = uc.Chrome(options=options, version_main=None)
             self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             
             self.logger.info("🚀 Paylocity client started successfully")
@@ -65,6 +95,7 @@ class PaylocityClient:
             
         except Exception as e:
             self.logger.error(f"❌ Failed to start Paylocity client: {e}")
+            self.logger.error(f"💡 Try updating Chrome or running: pip install --upgrade undetected-chromedriver")
             return False
 
     def login(self):
