@@ -171,21 +171,50 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
             return
             
         user_name = self.get_user_name(chat_id)
-        await update.message.reply_text(f"🕐 {user_name}, locating Clock In button...")
+        # Immediate acknowledgment
+        await update.message.reply_text(f"✅ Received your command, {user_name}! Processing...")
+        await update.message.reply_text(f"🕐 Locating Clock In button...")
         await self.locate_clock_in_button(update, user_name)
 
     async def clock_out_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /clockout command"""
+        chat_id = update.effective_chat.id
+        
+        # Check authorization
+        if not self.is_authorized_user(chat_id):
+            await update.message.reply_text("❌ You are not authorized to use this bot.")
+            return
+            
+        user_name = self.get_user_name(chat_id)
+        await update.message.reply_text(f"✅ Received your command, {user_name}! Processing...")
         await update.message.reply_text("🕕 Starting clock out process...")
         await self.perform_clock_action(update, "clock_out", "Clock Out")
 
     async def lunch_start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /lunchstart command"""
+        chat_id = update.effective_chat.id
+        
+        # Check authorization
+        if not self.is_authorized_user(chat_id):
+            await update.message.reply_text("❌ You are not authorized to use this bot.")
+            return
+            
+        user_name = self.get_user_name(chat_id)
+        await update.message.reply_text(f"✅ Received your command, {user_name}! Processing...")
         await update.message.reply_text("🍽️ Starting lunch break...")
         await self.perform_clock_action(update, "start_lunch", "Start Lunch")
 
     async def lunch_end_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /lunchend command"""
+        chat_id = update.effective_chat.id
+        
+        # Check authorization
+        if not self.is_authorized_user(chat_id):
+            await update.message.reply_text("❌ You are not authorized to use this bot.")
+            return
+            
+        user_name = self.get_user_name(chat_id)
+        await update.message.reply_text(f"✅ Received your command, {user_name}! Processing...")
         await update.message.reply_text("🍽️ Ending lunch break...")
         await self.perform_clock_action(update, "end_lunch", "End Lunch")
 
