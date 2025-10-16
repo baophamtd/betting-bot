@@ -430,6 +430,9 @@ class PaylocityClient:
             # Look for clock out button (case insensitive)
             clock_out_selectors = [
                 "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock out')]",
+                "//button[text()='clock out']",
+                "//button[contains(text(), 'Clock out')]",
+                "//button[contains(text(), 'clock out')]",
                 "//input[contains(translate(@value, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock out')]",
                 "//a[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'clock out')]",
                 "//button[contains(@class, 'clock-out')]",
@@ -443,30 +446,13 @@ class PaylocityClient:
                         self.logger.info(f"✅ Found Clock Out button: {selector}")
                         button.click()
                         time.sleep(2)
-                        
-                        # Look for success confirmation
-                        success_indicators = [
-                            "//div[contains(text(), 'Clocked Out')]",
-                            "//div[contains(text(), 'success')]",
-                            "//span[contains(text(), 'Clocked Out')]"
-                        ]
-                        
-                        for success_selector in success_indicators:
-                            try:
-                                success_elem = self.driver.find_element(By.XPATH, success_selector)
-                                if success_elem.is_displayed():
-                                    self.logger.info("✅ Clock out successful!")
-                                    return True
-                            except NoSuchElementException:
-                                continue
-                        
-                        self.logger.info("✅ Clock out button clicked")
+                        self.logger.info("✅ Clocked out!")
                         return True
                         
                 except NoSuchElementException:
                     continue
                     
-            self.logger.warning("⚠️ Clock Out button not found or not available")
+            self.logger.warning("⚠️ Clock out button not found or not available")
             return False
             
         except Exception as e:
