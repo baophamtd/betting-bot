@@ -168,7 +168,7 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
         # Immediate acknowledgment
         await update.message.reply_text(f"✅ Received your command, {user_name}! Processing...")
         await update.message.reply_text(f"🕐 Clocking in...")
-        await self.perform_clock_action(update, user_name, 'clock_in')
+        await self.perform_clock_action(update, 'clock_in')
 
     async def clock_out_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /clockout command"""
@@ -182,7 +182,7 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
         user_name = self.get_user_name(chat_id)
         await update.message.reply_text(f"✅ Received your command, {user_name}! Processing...")
         await update.message.reply_text("🕕 Starting clock out process...")
-        await self.perform_clock_action(update, user_name, "clock_out")
+        await self.perform_clock_action(update, "clock_out")
 
     async def lunch_start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /lunchstart command"""
@@ -196,7 +196,7 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
         user_name = self.get_user_name(chat_id)
         await update.message.reply_text(f"✅ Received your command, {user_name}! Processing...")
         await update.message.reply_text("🍽️ Starting lunch break...")
-        await self.perform_clock_action(update, user_name, "start_lunch")
+        await self.perform_clock_action(update, "start_lunch")
 
     async def lunch_end_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /lunchend command"""
@@ -210,14 +210,12 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
         user_name = self.get_user_name(chat_id)
         await update.message.reply_text(f"✅ Received your command, {user_name}! Processing...")
         await update.message.reply_text("🍽️ Ending lunch break...")
-        await self.perform_clock_action(update, user_name, "end_lunch")
+        await self.perform_clock_action(update, "end_lunch")
 
     async def skip_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /skip command"""
-        chat_id = update.effective_chat.id
-        user_name = self.get_user_name(chat_id)
         await update.message.reply_text("🔄 Clicking 'Skip for Now' button...")
-        await self.perform_clock_action(update, user_name, "handle_skip_for_now")
+        await self.perform_clock_action(update, "handle_skip_for_now")
 
     async def screenshot_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /screenshot command"""
@@ -321,7 +319,7 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
                 self.paylocity_client.close()
                 self.paylocity_client = None
 
-    async def perform_clock_action(self, update: Update, user_name: str, action_name: str):
+    async def perform_clock_action(self, update: Update, action_name: str):
         """Perform a clock action and send result"""
         try:
             if not self.paylocity_client:
@@ -341,9 +339,10 @@ Hi {user_name}! 👋 Welcome to the clock in/out bot.
             if success:
                 message = (
                     f"✅ **{action_name.replace('_', ' ').title()} Successful!**\n"
-                    f"🕐 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                    f"🕐 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                    f"💋 P.S. You should give your husband a kiss! 😘"
                 )
-                await update.message.reply_text(self.add_kiss_reminder(message, user_name))
+                await update.message.reply_text(message)
             else:
                 message = (
                     f"❌ **{action_name.replace('_', ' ').title()} Failed**\n"
