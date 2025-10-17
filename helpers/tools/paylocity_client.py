@@ -603,11 +603,18 @@ class PaylocityClient:
         try:
             self.logger.info("📊 Checking current status...")
             
-            if not self.find_time_entry_page():
-                return None
+            # Skip navigation - we're already on the dashboard with status info
+            # if not self.find_time_entry_page():
+            #     return None
                 
-            # Look for status indicators
+            # Look for status indicators on the dashboard
             status_selectors = [
+                "//*[contains(text(), 'clocked in')]",
+                "//*[contains(text(), 'clocked out')]", 
+                "//*[contains(text(), 'Clocked In')]",
+                "//*[contains(text(), 'Clocked Out')]",
+                "//*[contains(text(), '→ Clocked in')]",
+                "//*[contains(text(), '→ Clocked out')]",
                 "//div[contains(@class, 'status')]",
                 "//span[contains(@class, 'clock-status')]",
                 "//div[contains(text(), 'Clocked')]",
