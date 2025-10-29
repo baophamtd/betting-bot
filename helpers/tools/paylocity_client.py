@@ -539,12 +539,24 @@ class PaylocityClient:
             if not self.find_time_entry_page():
                 return False
                 
-            # Look for lunch start button
+            # Look for lunch start button (mirror robustness of Clock In)
             lunch_start_selectors = [
-                "//button[contains(text(), 'Start Lunch')]",
-                "//button[contains(text(), 'Lunch Out')]",
+                # Specific button structure with nested span (case-insensitive)
+                "//button[contains(@class, 'button_button__xfI5Z') and .//span[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'start lunch')]]",
+                # Span with known text class and case-insensitive match
+                "//button[.//span[@class='button_text__kMv0x' and contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'start lunch')]]",
+                # Any button containing a span with 'start lunch'
+                "//button[.//span[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'start lunch')]]",
+                # Case-insensitive traditional selectors for 'start lunch'
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'start lunch')]",
+                "//input[contains(translate(@value, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'start lunch')]",
+                "//a[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'start lunch')]",
+                # Alternative label some UIs use: 'Lunch Out' (case-insensitive)
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'lunch out')]",
+                "//input[contains(translate(@value, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'lunch out')]",
+                "//a[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'lunch out')]",
+                # Fallbacks by class/id
                 "//button[contains(@class, 'lunch-start')]",
-                "//input[@value='Start Lunch']",
                 "//button[contains(@id, 'lunch-start')]"
             ]
             
