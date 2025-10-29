@@ -5,6 +5,8 @@ Handles login and timekeeping actions on access.paylocity.com
 
 import time
 import logging
+import subprocess
+import re
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -39,6 +41,68 @@ class PaylocityClient:
             'login_button': (By.XPATH, "//button[contains(text(), 'Login')]"),
             'remember_username': (By.ID, 'RememberUsername')
         }
+
+    def _detect_chrome_version(self, chrome_binary):
+        """Detect the installed Chrome version dynamically"""
+        if not chrome_binary:
+            return None
+        
+        import platform
+        
+        try:
+            # On macOS, try reading from Info.plist first (more reliable)
+            if platform.system() == 'Darwin' and chrome_binary.endswith('Google Chrome'):
+                try:
+                    info_plist_path = chrome_binary.replace('/Contents/MacOS/Google Chrome', '/Contents/Info.plist')
+                    if os.path.exists(info_plist_path):
+                        # Try using plistlib or defaults command
+                        result = subprocess.run(
+                            ['defaults', 'read', info_plist_path, 'CFBundleShortVersionString'],
+                            capture_output=True,
+                            text=True,
+                            timeout=3
+                        )
+                        if result.returncode == 0:
+                            version_str = result.stdout.strip()
+                            match = re.search(r'^(\d+)\.', version_str)
+                            if match:
+                                major_version = int(match.group(1))
+                                self.logger.info(f"✅ Detected Chrome version: {major_version} (from Info.plist: {version_str})")
+                                return major_version
+                except Exception:
+                    pass  # Fall through to --version method
+            
+            # Try --version flag (works on Linux and Windows, sometimes macOS)
+            result = subprocess.run(
+                [chrome_binary, '--version'],
+                capture_output=True,
+                text=True,
+                timeout=10  # Increased timeout
+            )
+            
+            # Check both stdout and stderr for version info
+            version_output = (result.stdout or result.stderr or "").strip()
+            
+            if version_output:
+                # Extract major version number (e.g., "141" from "Google Chrome 141.0.6961.77")
+                match = re.search(r'(\d+)\.\d+\.\d+\.\d+', version_output)
+                if match:
+                    major_version = int(match.group(1))
+                    self.logger.info(f"✅ Detected Chrome version: {major_version} (from: {version_output})")
+                    return major_version
+                else:
+                    # Fallback: try to find any version pattern
+                    match = re.search(r'(\d+)', version_output)
+                    if match:
+                        major_version = int(match.group(1))
+                        self.logger.info(f"✅ Detected Chrome version: {major_version} (from: {version_output})")
+                        return major_version
+        except subprocess.TimeoutExpired:
+            self.logger.warning("⚠️ Chrome version detection timed out")
+        except Exception as e:
+            self.logger.warning(f"⚠️ Could not detect Chrome version: {e}")
+        
+        return None
 
     def start(self):
         """Initialize the browser driver"""
@@ -87,7 +151,15 @@ class PaylocityClient:
             if chrome_binary:
                 options.binary_location = chrome_binary
             
-            self.driver = uc.Chrome(options=options, version_main=None)
+            # Automatically detect Chrome version to match driver
+            detected_version = self._detect_chrome_version(chrome_binary)
+            if detected_version:
+                self.logger.info(f"🔧 Using detected Chrome version: {detected_version}")
+                self.driver = uc.Chrome(options=options, version_main=detected_version)
+            else:
+                # Fallback to auto-detection if version detection fails
+                self.logger.info("⚠️ Could not detect Chrome version, falling back to auto-detection")
+                self.driver = uc.Chrome(options=options, version_main=None)
             self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             
             self.logger.info("🚀 Paylocity client started successfully")
