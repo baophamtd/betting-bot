@@ -585,15 +585,26 @@ class PaylocityClient:
         try:
             self.logger.info("🍽️ Looking for End Lunch button...")
             
-            # Look for lunch end button
+            # Look for lunch end button (mirror robustness of Clock In)
             lunch_end_selectors = [
+                # Specific button structure with nested span (case-insensitive)
+                "//button[contains(@class, 'button_button__xfI5Z') and .//span[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'end lunch')]]",
+                # Span with known text class and case-insensitive match
+                "//button[.//span[@class='button_text__kMv0x' and contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'end lunch')]]",
+                # Any button containing a span with 'end lunch'
+                "//button[.//span[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'end lunch')]]",
+                # Case-insensitive traditional selectors for 'end lunch'
                 "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'end lunch')]",
-                "//button[contains(text(), 'End Lunch')]",
-                "//button[contains(text(), 'end lunch')]",
-                "//button[contains(text(), 'Lunch In')]",
+                "//input[contains(translate(@value, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'end lunch')]",
+                "//a[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'end lunch')]",
+                # Alternative label some UIs use: 'Lunch In' (case-insensitive)
+                "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'lunch in')]",
+                "//input[contains(translate(@value, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'lunch in')]",
+                "//a[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'lunch in')]",
+                # Fallbacks by class/id and exact value
                 "//button[contains(@class, 'lunch-end')]",
-                "//input[@value='End Lunch']",
-                "//button[contains(@id, 'lunch-end')]"
+                "//button[contains(@id, 'lunch-end')]",
+                "//input[@value='End Lunch']"
             ]
             
             for selector in lunch_end_selectors:
